@@ -19,7 +19,7 @@ void Display :: clear() {
     screen.display();
 }
 
-void Display :: writeLines(String line1, String line2, String line3, String line4, String line5, String line6) {
+void Display :: writeLines(String line1, String line2, String line3, String line4, String line5, String line6, String line7, String line8) {
     screen.clearDisplay();
     screen.setTextSize(1);
     screen.setTextColor(SSD1306_WHITE);
@@ -30,5 +30,7 @@ void Display :: writeLines(String line1, String line2, String line3, String line
     screen.println(line4);
     screen.println(line5);
     screen.println(line6);
+    screen.println(line7);
+    screen.println(line8);
     screen.display();
 }

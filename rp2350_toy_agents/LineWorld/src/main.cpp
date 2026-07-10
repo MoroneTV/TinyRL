@@ -22,6 +22,9 @@ void setup();
 void loop();
 void halt(String reason = "UNSPECIFIED");
 
+// =========== HELPER FUNCTIONS =========== //
+void dsp_loopScreen(int epNo, int agentPos);
+
 // ================================================================ //
 // ================================================================ //
 // ================================================================ //
@@ -36,43 +39,7 @@ void setup()
 
 void loop()
 {
-  static int episode = 1;
-
-  while (episode < EPISODES) {
-
-    Serial.println("STARTING EPISODE " + String(episode));
-
-    int now = millis();
-
-    int state = env.resetPosition();
-    bool done = false;
-
-    Serial.println("1");
-
-    while (!done) {
-      int action = agent.selectAction(state);
-      std::tuple<int,float,bool> response = env.step(action);
-
-      Serial.println("2");
-
-      int nextState = std::get<0>(response);
-      float reward = std::get<1>(response);
-      done = std::get<2>(response);
-
-      Serial.println("3");
-      Serial.println("Pos: " + String(state));
-      agent.update(state, action, reward, nextState);
-      state = nextState;
-
-      Serial.println("4");
-      Serial.println("Pos: " + String(state));
-
-    }
-
-    Serial.println("Episode " + String(episode) + " complete in " + String(millis() - now) + "ms.");
-  }
-
-  halt("COMPLETE");
+  dsp_loopScreen(1, 3);
 }
 
 // Display a halt message and halt the program, unspecified by default
@@ -85,4 +52,25 @@ void halt(String reason)
 
   while (1)
     sleep_ms(1000);
+}
+
+// Screen shown during the RL's main loop, showing the agent's position on a line.
+void dsp_loopScreen(int epNo, int agentPos) {
+
+  // Display agent on screen
+  String environment = "_ _ _ _ _ _ _ _ _ _ G";
+  String barometer =   "0 1 2 3 4 5 6 7 8 9 *";
+  environment.setCharAt(agentPos*2, 'A');
+
+  display.writeLines(
+    "Episode" + String(epNo),
+    "",
+    "",
+    ""
+    "",
+    environment,
+    "",
+    barometer
+  );
+
 }
