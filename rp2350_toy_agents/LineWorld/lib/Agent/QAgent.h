@@ -18,6 +18,7 @@ public:
     QAgent(float epsilon = 0.1, float gamma = 0.99, float lr = 0.1, int actions = 2, int maxState = 20)
         : epsilon(epsilon), gamma(gamma), lr(lr), actions(actions), qTable(maxState, std::vector<float>(actions, 0.0f))
     {
+    
     }
 
     int selectAction(int state);

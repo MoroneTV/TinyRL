@@ -1,7 +1,16 @@
 #ifndef LINEWORLD_H
 #define LINEWORLD_H
 
-#include <tuple>
+#include <Arduino.h>
+#include "Directions.h"
+
+struct EnvResponse {
+    int newPos;
+    float reward;
+    bool isDone;
+
+};
+
 
 class LineWorld {
 
@@ -14,8 +23,8 @@ class LineWorld {
 
         int resetPosition() { pos = 0; return pos;}   // reset agent position
         
-        // Take a step in a direction, returns tuple <(position), (reward), (is done?)>
-        std::tuple<int,float,bool> step(int dir);
+        // Take a step in a direction, returns EnvResponse (newPos, reward, isDone)
+        EnvResponse step(Directions1D dir);
 
 };
 

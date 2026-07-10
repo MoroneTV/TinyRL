@@ -23,7 +23,7 @@ void loop();
 void halt(String reason = "UNSPECIFIED");
 
 // =========== HELPER FUNCTIONS =========== //
-void dsp_loopScreen(int epNo, int agentPos);
+void dsp_loopScreen(int epNo, int agentPos, int shortestEp);
 
 // ================================================================ //
 // ================================================================ //
@@ -39,7 +39,43 @@ void setup()
 
 void loop()
 {
-  dsp_loopScreen(1, 3);
+
+  int fastestTime = 1000000000;
+
+  for (int episode = 0; episode < EPISODES; episode++) {
+
+    int state = env.resetPosition();
+    bool done = false;
+
+    int start = millis();
+
+    while(!done) {
+
+      // Choose action and apply it to environment
+      Directions1D action = static_cast<Directions1D>(agent.selectAction(state));
+      EnvResponse response = env.step(action);
+
+      // Update the agent's understanding based on environement response to action
+      agent.update(
+        state,
+        action,
+        response.reward,
+        response.newPos
+      );
+
+      // Update position and check if we're done.
+      state = response.newPos;
+      done = response.isDone;
+
+      // Display
+      dsp_loopScreen(episode, state, fastestTime);
+
+    }
+
+    int timeTaken = millis() - start;
+    if (timeTaken < fastestTime) fastestTime = timeTaken;
+
+  }
 }
 
 // Display a halt message and halt the program, unspecified by default
@@ -55,7 +91,11 @@ void halt(String reason)
 }
 
 // Screen shown during the RL's main loop, showing the agent's position on a line.
-void dsp_loopScreen(int epNo, int agentPos) {
+void dsp_loopScreen(int epNo, int agentPos, int shortestEp) {
+
+  String shortestEpisodeString = "";
+  if (shortestEp == 1000000000) shortestEpisodeString = ("No data yet");
+  else shortestEpisodeString = (String(shortestEp) + "ms");
 
   // Display agent on screen
   String environment = "_ _ _ _ _ _ _ _ _ _ G";
@@ -63,8 +103,8 @@ void dsp_loopScreen(int epNo, int agentPos) {
   environment.setCharAt(agentPos*2, 'A');
 
   display.writeLines(
-    "Episode" + String(epNo),
-    "",
+    "EPISODE " + String(epNo),
+    "SHORTEST EP: " + shortestEpisodeString,
     "",
     ""
     "",

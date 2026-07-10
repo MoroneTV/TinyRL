@@ -16,7 +16,7 @@ int QAgent::selectAction(int state)
     else
     {   
         // Vector for multiple idxs in case there's a tie and we need to choose randomly
-        float highestValue = 0.0f;
+        float highestValue = qTable[state][0];
         std::vector<int> bestIdxs = {0};
 
         for (int actionIdx = 0; actionIdx < qTable[state].size(); actionIdx++) {
@@ -25,6 +25,7 @@ int QAgent::selectAction(int state)
             if (qTable[state][actionIdx] > highestValue) {
                 bestIdxs.clear();
                 bestIdxs.push_back(actionIdx);
+                highestValue = qTable[state][actionIdx];
             }
             else if (qTable[state][actionIdx] == highestValue) {
                 bestIdxs.push_back(actionIdx);
@@ -40,11 +41,10 @@ void QAgent::update(int state, int action, float reward, int nextState)
 {
 
     // Find highest value next action and propogate backwards
-
     float highestValueNext = qTable[nextState][0];
     for (float value : qTable[nextState]) {
         if (value > highestValueNext) highestValueNext = value;
     }
 
-    qTable[state][action] = lr * (reward + gamma * highestValueNext - qTable[state][action]);
+    qTable[state][action] += lr * (reward + gamma * highestValueNext - qTable[state][action]);
 }
