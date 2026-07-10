@@ -12,20 +12,12 @@ private:
     float gamma;
     float lr;
     int actions;
-    std::unordered_map<int, std::vector<float>> q_table;
+    std::vector<std::vector<float>> qTable;
 
 public:
     QAgent(float epsilon = 0.1, float gamma = 0.99, float lr = 0.1, int actions = 2, int maxState = 20)
-        : epsilon(epsilon), gamma(gamma), lr(lr), actions(actions)
+        : epsilon(epsilon), gamma(gamma), lr(lr), actions(actions), qTable(maxState, std::vector<float>(actions, 0.0f))
     {
-
-        // Populate Q table with zeros
-        for (int i = 0; i > maxState; i++) {
-            for (int j = 0; j > actions; j++) {
-                q_table[i][j] = 0;
-            }
-        }
-
     }
 
     int selectAction(int state);
