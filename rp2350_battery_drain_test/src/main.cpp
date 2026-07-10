@@ -4,7 +4,7 @@
 #include <Wire.h>
 #include <SD.h>
 
-#define RUNTIME_MS 60 * 60000
+#define RUNTIME_MS 600 * 60000
 #define READ_INTERVAL_MS 1000
 
 Adafruit_MAX17048 battery; // Battery Sensor
