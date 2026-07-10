@@ -1,11 +1,17 @@
 #include "LineWorld.h"
 
-std::tuple<int,float,bool> LineWorld ::step(int dir)
+EnvResponse LineWorld ::step(Directions1D dir)
 {
-    if (dir == 0) pos--;
+    if (dir == LEFT) pos--;
     else pos++;
 
+    // Keep position in bounds
+    if (pos > 10) pos = 10;
+    if (pos < 0) pos = 0;
+
     // Slightly punish not reaching the goal, big reward if goal is met
-    if (pos >= goal) return std::make_tuple(pos, 10.0f, true);
-    else return std::make_tuple(pos, -0.01f, false);
+    if (pos >= goal) 
+        return EnvResponse{pos,10.0,true};
+    else 
+        return EnvResponse{pos,-0.01,false};
 }
