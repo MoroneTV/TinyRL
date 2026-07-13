@@ -33,24 +33,52 @@ bool InertiaSensor :: begin () {
     // Turn on the gyroscope's filter and apply settings.
     lsm.enableGyroLP1Filter();
     lsm.setGyroLP1Bandwidth(LSM6DSV16X_GY_ULTRA_LIGHT);
+    calibrate();
 
     Serial.println("Ready.");
-    calibrate();
 
     return true;
 }
 
 void InertiaSensor :: calibrate() {
 
-    InertiaReadings r = read();
+    delay(1000); // Wait for the sensor to stabilize
 
-    offsetAx = r.aX;
-    offsetAy = r.aY;
-    offsetAz = r.aZ;
+    float avgAx = 0.0f;
+    float avgAy = 0.0f;
+    float avgAz = 0.0f;
+    float avgGx = 0.0f;
+    float avgGy = 0.0f;
+    float avgGz = 0.0f;
 
-    offsetGx = r.gX;
-    offsetGy = r.gY;
-    offsetGz = r.gZ;
+    for (int i = 0; i < 100; i++) {
+        sfe_lsm_data_t accelData;
+        sfe_lsm_data_t gyroData;
+
+        lsm.getAccel(&accelData);
+        lsm.getGyro(&gyroData);
+
+        avgAx += accelData.xData;
+        avgAy += accelData.yData;
+        avgAz += accelData.zData;
+
+        avgGx += gyroData.xData;
+        avgGy += gyroData.yData;
+        avgGz += gyroData.zData;
+
+        delay(10);
+    }
+
+    offsetAx = avgAx / 100.0f;
+    offsetAy = avgAy / 100.0f;
+    offsetAz = avgAz / 100.0f;
+
+    offsetGx = avgGx / 100.0f;
+    offsetGy = avgGy / 100.0f;
+    offsetGz = avgGz / 100.0f;
+
+    Serial.println("Accel offsets: " + String(offsetAx) + ", " + String(offsetAy) + ", " + String(offsetAz));
+    Serial.println("Gyro offsets: " + String(offsetGx) + ", " + String(offsetGy) + ", " + String(offsetGz));
 
 }
 
@@ -62,16 +90,21 @@ InertiaReadings InertiaSensor :: read() {
     lsm.getAccel(&accelData);
     lsm.getGyro(&gyroData);
 
+    Serial.println("offsets A: " + String(offsetAx) + ", " + String(offsetAy) + ", " + String(offsetAz));
+    Serial.println("offsets G: " + String(offsetGx) + ", " + String(offsetGy) + ", " + String(offsetGz));
+
     return InertiaReadings 
     {
-        accelData.xData - offsetAx / 100.0f,
-        accelData.yData - offsetAy / 100.0f,
-        accelData.zData - offsetAz / 100.0f,
+        (accelData.xData - offsetAx) / 100.0f,
+        (accelData.yData - offsetAy) / 100.0f,
+        (accelData.zData - offsetAz) / 100.0f,
 
-        gyroData.xData - offsetGx / 100.0f,   // The library reads in milidegrees per second, so we convert to degrees per second.
-        gyroData.yData - offsetGy / 100.0f,
-        gyroData.zData - offsetGz / 100.0f,
+        (gyroData.xData - offsetGx) / 100.0f,   // The library reads in milidegrees per second, so we convert to degrees per second.
+        (gyroData.yData - offsetGy) / 100.0f,
+        (gyroData.zData - offsetGz) / 100.0f,
     };
+
+    
 }
 
 void InertiaSensor :: updatePrecision(int lvl) {
