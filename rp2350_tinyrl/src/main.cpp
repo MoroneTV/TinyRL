@@ -3,37 +3,22 @@
 #include "Display.h"
 #include <Wire.h>
 
+
 // TODO:
 // 1. Add writing to an SD card or uploading to DB
 // 2. Add sensors, Temperature and air quality are probably the best
 // 3. Start Figuring out how to insert RL into the code, and how to make it work with the sensors
 
 
-// ========= Objects =========
+
+// ========= Objects and Globals =========
 Adafruit_MAX17048 battery; // Battery Sensor
 Display display;           // Screen
 
-// ========= System Flags =========
-struct Flags
-{
-  bool batterySensorEnabled = false;
-};
-Flags flags;
+int voltzPerEpisode;
 
-// ========= System Intervals =========
-struct Intervals
-{
-  int scanInterval = 2000; // Time between sensor scans in milliseconds
-  int displayInterval = 50; // Time between display updates in milliseconds
-};
-Intervals intervals;
+String runtimePermutation = ""; // Used to define the Log and Q Table file numbers
 
-// ========= Most Recent Scans =========
-struct Scans
-{
-  float powerConsumption = -1; // Batter dis/charge rate in %/hr, -1 if battery sensor disabled
-};
-Scans scans;
 
 // ========= Main Functions =========
 void setup();
@@ -43,10 +28,16 @@ void halt(String reason = "UNSPECIFIED");
 // ========= Setup Functions =========
 void setupBattery();
 
+void setupSDcard();
+void defineRuntimePermutation();
+void importQtable();
+
 // ========= Loop Functions =========
-void readSensors();
-float getPowerConsumption();
-void setSensorResolution(int lvl);
+
+void smoothVoltage();
+void completeEpisode();
+void exportQTable();
+void updateResultsFile();
 
 // ========= Display Functions =========
 void dsp_setup();
@@ -67,33 +58,29 @@ void setup()
   display.begin();
   dsp_setup();
 
-  // Setup components
-  setupBattery();
 }
+
+void setupBattery();
+void setupSDcard();
+void defineRuntimePermutation();
+void importQtable();
 
 void loop()
 {
-  sleep_ms(10);
 
-  static int lastScanTime = millis();
-  static int lastDisplayTime = millis();
-
-  if (millis() - lastScanTime >= intervals.scanInterval)
-  {
-    scans.powerConsumption = getPowerConsumption();
-    lastScanTime = millis();
-  }
-
-  if (millis() - lastDisplayTime >= intervals.displayInterval)
-  {
-    dsp_loop(scans.powerConsumption);
-    lastDisplayTime = millis();
-  }
-
-  // RL Stuff goes here, ability to edit which sensors are on, the intervals
-  // and sensor resolution maybe?
-  
 }
+
+// Converts voltage measurement into a rolling average to smooth it out.
+void smoothVoltage();
+
+// Runs an episode to completion
+void completeEpisode();
+
+// Exports the contents to a Q file to an SD card
+void exportQTable();
+
+// Writes information about each timestep to an SD card
+void updateResultsFile();
 
 // Display a halt message and halt the program, unspecified by default
 void halt(String reason)
@@ -101,24 +88,6 @@ void halt(String reason)
   dsp_halt(reason);
   while (1)
     sleep_ms(1000);
-}
-
-// Get the battery
-float getPowerConsumption()
-{
-  // Early exit if battery sensor is not enabled
-  if (!flags.batterySensorEnabled)
-    return -1;
-
-  Serial.println("Battery Charge Rate: " + String(battery.chargeRate()) + "%/hr");
-  return battery.chargeRate();
-};
-
-void setupBattery()
-{
-  battery.begin();
-  battery.quickStart();
-  flags.batterySensorEnabled = true;
 }
 
 void dsp_setup()
