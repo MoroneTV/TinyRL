@@ -35,7 +35,23 @@ bool InertiaSensor :: begin () {
     lsm.setGyroLP1Bandwidth(LSM6DSV16X_GY_ULTRA_LIGHT);
 
     Serial.println("Ready.");
+    calibrate();
+
     return true;
+}
+
+void InertiaSensor :: calibrate() {
+
+    InertiaReadings r = read();
+
+    offsetAx = r.aX;
+    offsetAy = r.aY;
+    offsetAz = r.aZ;
+
+    offsetGx = r.gX;
+    offsetGy = r.gY;
+    offsetGz = r.gZ;
+
 }
 
 InertiaReadings InertiaSensor :: read() {
@@ -48,13 +64,13 @@ InertiaReadings InertiaSensor :: read() {
 
     return InertiaReadings 
     {
-        accelData.xData,
-        accelData.yData,
-        accelData.zData,
-        
-        gyroData.xData,
-        gyroData.yData,
-        gyroData.zData,
+        accelData.xData - offsetAx / 100.0f,
+        accelData.yData - offsetAy / 100.0f,
+        accelData.zData - offsetAz / 100.0f,
+
+        gyroData.xData - offsetGx / 100.0f,   // The library reads in milidegrees per second, so we convert to degrees per second.
+        gyroData.yData - offsetGy / 100.0f,
+        gyroData.zData - offsetGz / 100.0f,
     };
 }
 
@@ -72,19 +88,13 @@ void InertiaSensor :: updatePrecision(int lvl) {
 
         case 1:
             lsm.setAccelDataRate(LSM6DSV16X_ODR_AT_60Hz);
-            lsm.setAccelFullScale(LSM6DSV16X_4g);
-
             lsm.setGyroDataRate(LSM6DSV16X_ODR_AT_60Hz);
-            lsm.setGyroFullScale(LSM6DSV16X_500dps);
             break;
 
 
         case 2:
             lsm.setAccelDataRate(LSM6DSV16X_ODR_AT_480Hz);
-            lsm.setAccelFullScale(LSM6DSV16X_16g);
-
             lsm.setGyroDataRate(LSM6DSV16X_ODR_AT_480Hz);
-            lsm.setGyroFullScale(LSM6DSV16X_2000dps);
             break;
     
     default:

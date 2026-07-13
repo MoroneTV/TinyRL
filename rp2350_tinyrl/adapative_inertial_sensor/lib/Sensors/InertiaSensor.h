@@ -34,6 +34,15 @@ private:
     bool enabled = false;
     int precisionLvl = 1;
 
+    float offsetAx = 0.0f;
+    float offsetAy = 0.0f;
+    float offsetAz = 0.0f;
+    float offsetGx = 0.0f;
+    float offsetGy = 0.0f;
+    float offsetGz = 0.0f;
+
+    void calibrate();
+
 };
 
 
