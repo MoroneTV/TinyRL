@@ -33,7 +33,9 @@ bool InertiaSensor :: begin () {
     // Turn on the gyroscope's filter and apply settings.
     lsm.enableGyroLP1Filter();
     lsm.setGyroLP1Bandwidth(LSM6DSV16X_GY_ULTRA_LIGHT);
+
     calibrate();
+    updatePrecision(2); // Max quality and power consumption
 
     Serial.println("Ready.");
 
@@ -77,9 +79,6 @@ void InertiaSensor :: calibrate() {
     offsetGy = avgGy / 100.0f;
     offsetGz = avgGz / 100.0f;
 
-    Serial.println("Accel offsets: " + String(offsetAx) + ", " + String(offsetAy) + ", " + String(offsetAz));
-    Serial.println("Gyro offsets: " + String(offsetGx) + ", " + String(offsetGy) + ", " + String(offsetGz));
-
 }
 
 InertiaReadings InertiaSensor :: read() {
@@ -90,8 +89,6 @@ InertiaReadings InertiaSensor :: read() {
     lsm.getAccel(&accelData);
     lsm.getGyro(&gyroData);
 
-    Serial.println("offsets A: " + String(offsetAx) + ", " + String(offsetAy) + ", " + String(offsetAz));
-    Serial.println("offsets G: " + String(offsetGx) + ", " + String(offsetGy) + ", " + String(offsetGz));
 
     return InertiaReadings 
     {
@@ -107,30 +104,54 @@ InertiaReadings InertiaSensor :: read() {
     
 }
 
-void InertiaSensor :: updatePrecision(int lvl) {
+int InertiaSensor :: updatePrecision(int lvl) {
 
     switch (lvl)
     {
         case 0:
             lsm.setAccelDataRate(LSM6DSV16X_ODR_AT_7Hz5);
             lsm.setAccelFullScale(LSM6DSV16X_4g);
-
             lsm.setGyroDataRate(LSM6DSV16X_ODR_OFF);
+            precisionLvl = 0;
             break;
-
 
         case 1:
             lsm.setAccelDataRate(LSM6DSV16X_ODR_AT_60Hz);
-            lsm.setGyroDataRate(LSM6DSV16X_ODR_AT_60Hz);
+            lsm.setGyroDataRate(LSM6DSV16X_ODR_OFF);
+            precisionLvl = 1;
             break;
 
+        case 2:
+            lsm.setAccelDataRate(LSM6DSV16X_ODR_AT_240Hz);
+            lsm.setGyroDataRate(LSM6DSV16X_ODR_AT_240Hz);
+            precisionLvl = 2;
+            break;
+
+        default:
+            return -1;
+    }
+
+    return precisionLvl;
+}
+
+int InertiaSensor :: getTimeBetweenReadings() {
+
+    switch (precisionLvl)
+    {
+        case 0:
+            return 133; // 7.5Hz
+            break;
+
+        case 1:
+            return 16; // 60Hz
+            break;
 
         case 2:
-            lsm.setAccelDataRate(LSM6DSV16X_ODR_AT_480Hz);
-            lsm.setGyroDataRate(LSM6DSV16X_ODR_AT_480Hz);
+            return 4; // 240Hz
             break;
     
     default:
+        return -1;
         break;
     }
 

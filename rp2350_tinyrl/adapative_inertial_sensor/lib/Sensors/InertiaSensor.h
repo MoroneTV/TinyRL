@@ -23,7 +23,7 @@ public:
 
     bool begin();
     InertiaReadings read();
-    void updatePrecision(int lvl);  // 0 = Sleep, 4 = Max quality and power consumption
+    void updatePrecision(int lvl);  // 0 = Sleep, 2 = Max quality and power consumption
 
     int getPrecisionLvl() { return precisionLvl; }
     bool isEnabled() { return enabled; }
