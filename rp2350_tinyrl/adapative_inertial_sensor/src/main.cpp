@@ -11,6 +11,7 @@ InertiaSensor inertia;
 
 String runtimePermutation = ""; // Used to define the Log and Q Table file numbers
 
+
 // ========= Main Functions =========
 void setup();
 void loop();
@@ -56,14 +57,53 @@ void defineRuntimePermutation();
 
 void loop()
 {
-  delay(500);
-  InertiaReadings r = inertia.read();
-  Serial.println("Accel: " + String(r.aX) + ", " + String(r.aY) + ", " + String(r.aZ));
-  Serial.println("Gyro: " + String(r.gX) + ", " + String(r.gY) + ", " + String(r.gZ));
 
-  display.writeLines(
-      "Accel: " + String(r.aX) + ", " + String(r.aY) + ", " + String(r.aZ),
-      "Gyro: " + String(r.gX) + ", " + String(r.gY) + ", " + String(r.gZ));
+  // 1. Data Collection Period
+  int delayBetweenReadings = inertia.getTimeBetweenReadings();
+  InertiaReadings dataBuffer[250];
+  int idx = 0;
+
+  // Collect data for 1 second
+  int dataCollectionTime = millis();
+  while (millis() - dataCollectionTime < 1000)
+  {
+    dataBuffer[idx] = inertia.read();
+    idx++;
+
+    // Delay matches the read rate of the sensor.
+    delay(delayBetweenReadings);
+  }
+
+  // 2. Process Data
+  int precisionLvl = inertia.getPrecisionLvl();
+
+  // Get variance of the magnitude of the acceleration vector
+  float mean = 0.0f;
+  for (int i = 0; i < idx; i++) 
+  {
+    float accelMag = sqrt(pow(dataBuffer[i].aX, 2) + pow(dataBuffer[i].aY, 2) + pow(dataBuffer[i].aZ, 2));
+    mean += accelMag;
+  }
+  mean /= idx;
+
+  float variance = 0.0f;
+  for (int i = 0; i < idx; i++) {
+    float accelMag = sqrt(pow(dataBuffer[i].aX, 2) + pow(dataBuffer[i].aY, 2) + pow(dataBuffer[i].aZ, 2));
+    variance += pow(accelMag - mean, 2);
+  }
+  variance /= idx;
+
+  // 3. Reset buffer for next loop
+  for (int i = 0; i < idx; i++)
+  {
+    dataBuffer[i] = InertiaReadings{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+  }
+  idx = 0;
+
+  Serial.println("VARIANCE: " + String(variance));
+
+  // 3. Agent Decision
+
 }
 
 
