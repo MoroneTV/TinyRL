@@ -42,6 +42,16 @@ bool InertiaSensor :: begin () {
     return true;
 }
 
+void InertiaSensor::resetToDefaults() {
+    // Set the output data rate and precision of the accelerometer
+    lsm.setAccelDataRate(LSM6DSV16X_ODR_AT_7Hz5);
+    lsm.setAccelFullScale(LSM6DSV16X_16g);
+
+    // Set the output data rate and precision of the gyroscope
+    lsm.setGyroDataRate(LSM6DSV16X_ODR_AT_15Hz);
+    lsm.setGyroFullScale(LSM6DSV16X_2000dps);
+}
+
 void InertiaSensor :: calibrate() {
 
     delay(1000); // Wait for the sensor to stabilize
@@ -104,7 +114,7 @@ InertiaReadings InertiaSensor :: read() {
     
 }
 
-int InertiaSensor :: updatePrecision(int lvl) {
+void InertiaSensor :: updatePrecision(int lvl) {
 
     switch (lvl)
     {
@@ -126,12 +136,7 @@ int InertiaSensor :: updatePrecision(int lvl) {
             lsm.setGyroDataRate(LSM6DSV16X_ODR_AT_240Hz);
             precisionLvl = 2;
             break;
-
-        default:
-            return -1;
     }
-
-    return precisionLvl;
 }
 
 int InertiaSensor :: getTimeBetweenReadings() {

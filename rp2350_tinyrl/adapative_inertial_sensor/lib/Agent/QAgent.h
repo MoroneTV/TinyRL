@@ -23,6 +23,8 @@ public:
 
     int selectAction(int state);
     void update(int state, int action, float reward, int nextState);
+
+    std::vector<std::vector<float>> getQTable() {return qTable;}
 };
 
 #endif
