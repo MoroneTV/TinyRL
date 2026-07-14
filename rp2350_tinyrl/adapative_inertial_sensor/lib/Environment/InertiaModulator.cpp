@@ -1,6 +1,7 @@
 #include "InertiaModulator.h"
 
-void InertiaModulator::begin() {
+void InertiaModulator::begin()
+{
     sensor.begin();
 }
 
@@ -18,14 +19,7 @@ InertiaFeedback InertiaModulator::agentAction(int action)
     InertiaFeedback feedback = processBuffer();
 
     // Clip variance into different thresholds between 0 and 2
-    int varLvl;
-    if (feedback.varianceRaw <= 0.5) varLvl = 0;
-    else if (feedback.varianceRaw > 0.5 && feedback.varianceRaw <= 5) varLvl = 1;
-    else varLvl = 2;
-    feedback.varianceLvl = varLvl;
-
-    Serial.println("RAW VAR: " + String(feedback.varianceRaw));
-    Serial.println("VAR LVL: " + String(feedback.varianceLvl));
+    feedback.varianceLvl = getBoundVariance(feedback.varianceRaw);
 
     // Using an appropriate precision with an appropriate var should make the difference 0, so 2 reward.
     // Off by 1 is 2-1 reward, so 1 reward
@@ -38,6 +32,17 @@ InertiaFeedback InertiaModulator::agentAction(int action)
     return feedback;
 }
 
+int InertiaModulator::getBoundVariance(float rawVar)
+{
+    int varLvl;
+    if (rawVar <= 0.5)
+        varLvl = 0;
+    else if (rawVar > 0.5 && rawVar <= 5)
+        varLvl = 1;
+    else
+        varLvl = 2;
+}
+
 void InertiaModulator::fillBuffer()
 {
 
@@ -48,19 +53,17 @@ void InertiaModulator::fillBuffer()
     int start = millis();
     while (millis() - start < 1000)
     {
-
         rBuffer[rIdx] = sensor.read();
+        rIdx++;
 
         // how often readings should be taken depends on the sensor Hz.
         delay(sensor.getTimeBetweenReadings());
-
-        rIdx++;
     }
 }
 
 void InertiaModulator::resetBuffer()
 {
-    // All non-empty values in reading buffer (up to maxIdx) set to 0
+    // All non-empty values in reading buffer (up to rIdx) set to 0
     for (int i = 0; i <= rIdx; i++)
         rBuffer[i] = InertiaReadings{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     rIdx = 0;
@@ -136,6 +139,8 @@ int InertiaModulator::resetEnvironment()
 {
     resetBuffer();
     sensor.resetToDefaults();
+    runtimeMs = random((20 * 1000 * 60), (40 * 1000 * 60)); // 20-40 Mins
+    energyRemaining = 10000;
 
     // variance lvl (0 at start)
     return 0;
