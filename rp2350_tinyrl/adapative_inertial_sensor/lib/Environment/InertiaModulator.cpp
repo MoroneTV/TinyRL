@@ -12,7 +12,7 @@ InertiaFeedback InertiaModulator::agentAction(int action)
     if (action != sensor.getPrecisionLvl())
         sensor.updatePrecision(action);
 
-    // Get new readings after updating the sensor
+    // Get new readings after updating the sensor. This takes 1 second.
     fillBuffer();
 
     // Process buffer readings to get the variance, also add the precision
@@ -21,15 +21,45 @@ InertiaFeedback InertiaModulator::agentAction(int action)
     // Clip variance into different thresholds between 0 and 2
     feedback.varianceLvl = getBoundVariance(feedback.varianceRaw);
 
+    // Update the battery level and time left
+    energyRemaining -= energyCosts[action];
+    timeMsRemaining -= millis() - startTime;
+
+    // Calculate reward
+    feedback.reward = calculateReward(feedback.varianceLvl, action);
+
+    // Check if the episode should be over;
+    if (timeMsRemaining <= 0)
+        feedback.isDone = true;
+
+    // State is a combination of the variance level, and the energy remaining
+    feedback.newState = getDiscreteEnergyLvl(energyRemaining) * 3 + feedback.varianceLvl;
+
+    return feedback;
+}
+
+float InertiaModulator::calculateReward(int varianceLvl, int action)
+{
+
+    float reward;
+
+    bool isEnergyDepleted = (energyRemaining <= 0);
+    bool isOutOfTime = (timeMsRemaining <= 0);
+
+    // If battery is empty and time isn't over, big punishment
+    if (isEnergyDepleted && !isOutOfTime)
+        reward -= 200;
+
+    // If time is over and battery isn't empty, big reward
+    if (isOutOfTime && !isEnergyDepleted)
+        reward += 200;
+
     // Using an appropriate precision with an appropriate var should make the difference 0, so 2 reward.
     // Off by 1 is 2-1 reward, so 1 reward
     // Completely disparate is 2, so 2-2, 0 reward
-    feedback.reward = 2 - abs(feedback.varianceLvl - action);
+    reward += 2 - abs(varianceLvl - action);
 
-    // State is a combination of the precison level and the variance level
-    feedback.newState = feedback.varianceLvl;
-
-    return feedback;
+    return reward;
 }
 
 int InertiaModulator::getBoundVariance(float rawVar)
@@ -139,9 +169,38 @@ int InertiaModulator::resetEnvironment()
 {
     resetBuffer();
     sensor.resetToDefaults();
-    runtimeMs = random((20 * 1000 * 60), (40 * 1000 * 60)); // 20-40 Mins
+    startTime = millis();
+    timeMsRemaining = random((20 * 1000 * 60), (40 * 1000 * 60)); // 20-40 Mins
     energyRemaining = 10000;
 
     // variance lvl (0 at start)
     return 0;
+}
+
+int InertiaModulator::getDiscreteEnergyLvl(float energyLevel)
+{
+    int energyBin;
+
+    if (energyLevel <= 1000.0f)
+        energyBin = 0;
+    else if (energyLevel <= 2000.0f)
+        energyBin = 1;
+    else if (energyLevel <= 3000.0f)
+        energyBin = 2;
+    else if (energyLevel <= 4000.0f)
+        energyBin = 3;
+    else if (energyLevel <= 5000.0f)
+        energyBin = 4;
+    else if (energyLevel <= 6000.0f)
+        energyBin = 5;
+    else if (energyLevel <= 7000.0f)
+        energyBin = 6;
+    else if (energyLevel <= 8000.0f)
+        energyBin = 7;
+    else if (energyLevel <= 9000.0f)
+        energyBin = 8;
+    else
+        energyBin = 9;
+    
+    return energyBin;
 }
