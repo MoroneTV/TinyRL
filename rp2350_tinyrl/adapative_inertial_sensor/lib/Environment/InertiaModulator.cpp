@@ -1,5 +1,9 @@
 #include "InertiaModulator.h"
 
+void InertiaModulator::begin() {
+    sensor.begin();
+}
+
 InertiaFeedback InertiaModulator::agentAction(int action)
 {
 
@@ -12,11 +16,26 @@ InertiaFeedback InertiaModulator::agentAction(int action)
 
     // Process buffer readings to get the variance, also add the precision
     InertiaFeedback feedback = processBuffer();
-    feedback.precisionLvl = sensor.getPrecisionLvl();
 
-    // Clip variance into different thresholds
+    // Clip variance into different thresholds between 0 and 2
     int varLvl;
-    if (feedback.varianceRaw)
+    if (feedback.varianceRaw <= 0.5) varLvl = 0;
+    else if (feedback.varianceRaw > 0.5 && feedback.varianceRaw <= 5) varLvl = 1;
+    else varLvl = 2;
+    feedback.varianceLvl = varLvl;
+
+    Serial.println("RAW VAR: " + String(feedback.varianceRaw));
+    Serial.println("VAR LVL: " + String(feedback.varianceLvl));
+
+    // Using an appropriate precision with an appropriate var should make the difference 0, so 2 reward.
+    // Off by 1 is 2-1 reward, so 1 reward
+    // Completely disparate is 2, so 2-2, 0 reward
+    feedback.reward = 2 - abs(feedback.varianceLvl - action);
+
+    // State is a combination of the precison level and the variance level
+    feedback.newState = feedback.varianceLvl;
+
+    return feedback;
 }
 
 void InertiaModulator::fillBuffer()
@@ -34,6 +53,8 @@ void InertiaModulator::fillBuffer()
 
         // how often readings should be taken depends on the sensor Hz.
         delay(sensor.getTimeBetweenReadings());
+
+        rIdx++;
     }
 }
 
@@ -70,9 +91,9 @@ InertiaFeedback InertiaModulator::processBuffer()
         // Only get these if Gyro is enabled
         if (sensor.getPrecisionLvl() <= 2)
         {
-            avgGX += rBuffer[i].aX;
-            avgGY += rBuffer[i].aX;
-            avgGZ += rBuffer[i].aX;
+            avgGX += rBuffer[i].gX;
+            avgGY += rBuffer[i].gY;
+            avgGZ += rBuffer[i].gZ;
         }
     }
 
@@ -111,8 +132,11 @@ InertiaFeedback InertiaModulator::processBuffer()
     return feedback;
 }
 
-void InertiaModulator::resetEnvironment()
+int InertiaModulator::resetEnvironment()
 {
     resetBuffer();
     sensor.resetToDefaults();
+
+    // variance lvl (0 at start)
+    return 0;
 }

@@ -6,29 +6,34 @@
 
 struct InertiaFeedback {
     float varianceRaw = 0.0f;
-    float reward = 0.0f;
+    int varianceLvl = 0;
+
+    int reward = 0.0f;
     int precisionLvl = 0;
 
-    // These are just for printing
-    String avgAX = "NULL";
-    String avgAY = "NULL";
-    String avgAZ = "NULL";
+    int newState = 0;
 
-    String avgGX = "NULL";
-    String avgGY = "NULL";
-    String avgGZ = "NULL";
+    // These are just for printing
+    String avgAX = "X";
+    String avgAY = "X";
+    String avgAZ = "X";
+
+    String avgGX = "X";
+    String avgGY = "X";
+    String avgGZ = "X";
 };
 
 class InertiaModulator {
     public:
         InertiaModulator() {
-            sensor.begin();
         };
+
+        void begin();
 
         InertiaFeedback agentAction(int action);
 
         // Resets buffer and sensor to default
-        void resetEnvironment();    
+        int resetEnvironment();    
 
     private:
         InertiaSensor sensor;
