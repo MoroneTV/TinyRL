@@ -4,8 +4,9 @@
 #include <Wire.h>
 #include "InertiaModulator.h"
 #include "QAgent.h"
+#include <SD.h>
 
-#define EPISODE_COUNT 10
+#define EPISODE_COUNT 5
 #define MS_PER_EPISODE 60000
 
 // ========= Objects and Globals =========
@@ -109,6 +110,19 @@ void loop()
 // Display a halt message and halt the program, unspecified by default
 void halt(String reason)
 {
+
+  SD.begin(SS);
+  File f = SD.open("agent.txt", FILE_WRITE);
+  f.println("QTABLE:");
+
+  std::vector<std::vector<float>> qTable = agent.getQTable();
+    for (int i = 0; i < qTable.size(); i++) {
+      for(float weight : qTable[i]) {
+        f.print(String(weight) + ",");
+      }
+      f.print("\n");
+    }
+
   dsp_halt(reason);
   while (1)
     sleep_ms(1000);
