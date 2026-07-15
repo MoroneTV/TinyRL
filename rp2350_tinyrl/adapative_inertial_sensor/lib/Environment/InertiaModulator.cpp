@@ -21,6 +21,7 @@ InertiaFeedback InertiaModulator::agentAction(int action)
 
     // Clip variance into different thresholds between 0 and 2
     feedback.varianceLvl = getBoundVariance(feedback.varianceRaw);
+    Serial.println("Variance Lvl: " + String(feedback.varianceLvl) + " with Action : " + String(action));
 
     // Update the battery level and time left
     energyRemaining -= energyCosts[action];
@@ -60,16 +61,19 @@ float InertiaModulator::calculateReward(int varianceLvl, int action)
 
     // Both variance and action have 3 possible choices, and the best option for each is
     // a 1-1 mapping (lowest variance, lowest action), so absolute difference works.
-    reward += 2 - abs(varianceLvl - action);
+    reward += 1 - abs(varianceLvl - action);
 
     // If the energy level is below the time level (e.g. 80% time left but 10% energy left)
     // punish the agent with a a punishment relative to the level of the deficit, to discourage wasting battery.
     float energyFrac = energyRemaining / maxEnergy;
-    float timeFrac = timeLeftMs / episodeLength;
+    float timeFrac = float(timeLeftMs) / episodeLength;
+
     if (energyFrac < timeFrac)
     {
         reward -= 5.0f * (timeFrac - energyFrac);
     }
+
+    Serial.println("REWARD: " + String(reward));
 
     return reward;
 }
