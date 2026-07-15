@@ -5,14 +5,14 @@
 #include "InertiaModulator.h"
 #include "QAgent.h"
 
-#define EPISODE_COUNT 30
+#define EPISODE_COUNT 10
 #define MS_PER_EPISODE 60000
 
 // ========= Objects and Globals =========
 Adafruit_MAX17048 battery; // Battery Sensor
 Display display;           // Screen
 
-QAgent agent(0.1f, 0.0f, 0.1f, 3, 3);  // 3 actions and 3 states
+QAgent agent(0.1f, 0.0f, 0.1f, 3, 30);  // 3 actions and 30 states
 InertiaModulator env;
 
 String runtimePermutation = ""; // Used to define the Log and Q Table file numbers
@@ -60,9 +60,10 @@ void loop()
   for (int i = 1; i < EPISODE_COUNT+1; i++) {
 
     int state = env.resetEnvironment();
+    bool isDone = false;
     int start = millis();
 
-    while (millis() - start < MS_PER_EPISODE) {
+    while (!isDone) {
 
       // Take action, get response
       int action = agent.selectAction(state);
@@ -80,6 +81,7 @@ void loop()
 
       // Update state
       state = response.newState;
+      isDone = response.isDone;
 
       // Display information to screen
       dsp_loop(response, battery.cellVoltage(), i);
@@ -123,10 +125,10 @@ void dsp_halt(String reason)
       "");
 }
 
-void dsp_loop(InertiaFeedback environmentInformation, float batteryLvl, int episodeNo) {
+void dsp_loop(InertiaFeedback envInfo, float batteryLvl, int episodeNo) {
 
   String precisionLvl = "";
-  switch (environmentInformation.newState)
+  switch (envInfo.precisionLvl)
   {
   case 0:
     precisionLvl = "LOW";
@@ -141,8 +143,11 @@ void dsp_loop(InertiaFeedback environmentInformation, float batteryLvl, int epis
 
   display.writeLines(
 
-    "EP: " + String(episodeNo) + "\t" + "V: " + String(batteryLvl),
+    "EP: " + String(episodeNo) + "   ||   " + "V: " + String(batteryLvl),
     "",
-    "Sensor Precision: " + precisionLvl
+    "Sensor Mode: " + precisionLvl,
+    "",
+    envInfo.minsLeftInEp + " Mins Remaining",
+    envInfo.energyPercentLeft + "\% Energy Budget"
   );
 }

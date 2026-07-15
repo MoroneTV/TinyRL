@@ -17,22 +17,26 @@ InertiaFeedback InertiaModulator::agentAction(int action)
 
     // Process buffer readings to get the variance, also add the precision
     InertiaFeedback feedback = processBuffer();
+    feedback.precisionLvl = action;
 
     // Clip variance into different thresholds between 0 and 2
     feedback.varianceLvl = getBoundVariance(feedback.varianceRaw);
 
     // Update the battery level and time left
     energyRemaining -= energyCosts[action];
-    timeMsRemaining -= millis() - startTime;
+    timeLeftMs = episodeLength - (millis() - startTime);
+
+    feedback.minsLeftInEp = String(int(timeLeftMs / 1000 / 60));
+    feedback.energyPercentLeft = String(int((energyRemaining / 10000) * 100));
 
     // Calculate reward
     feedback.reward = calculateReward(feedback.varianceLvl, action);
 
     // Check if the episode should be over;
-    if (timeMsRemaining <= 0)
+    if (timeLeftMs <= 0 || energyRemaining <= 0)
         feedback.isDone = true;
 
-    // State is a combination of the variance level, and the energy remaining
+    // State is a combination of the variance level (3 exist), and the energy remaining (10 bins), for 30 states
     feedback.newState = getDiscreteEnergyLvl(energyRemaining) * 3 + feedback.varianceLvl;
 
     return feedback;
@@ -41,10 +45,10 @@ InertiaFeedback InertiaModulator::agentAction(int action)
 float InertiaModulator::calculateReward(int varianceLvl, int action)
 {
 
-    float reward;
+    float reward = 0.0f;
 
     bool isEnergyDepleted = (energyRemaining <= 0);
-    bool isOutOfTime = (timeMsRemaining <= 0);
+    bool isOutOfTime = (timeLeftMs <= 0);
 
     // If battery is empty and time isn't over, big punishment
     if (isEnergyDepleted && !isOutOfTime)
@@ -54,10 +58,18 @@ float InertiaModulator::calculateReward(int varianceLvl, int action)
     if (isOutOfTime && !isEnergyDepleted)
         reward += 200;
 
-    // Using an appropriate precision with an appropriate var should make the difference 0, so 2 reward.
-    // Off by 1 is 2-1 reward, so 1 reward
-    // Completely disparate is 2, so 2-2, 0 reward
+    // Both variance and action have 3 possible choices, and the best option for each is
+    // a 1-1 mapping (lowest variance, lowest action), so absolute difference works.
     reward += 2 - abs(varianceLvl - action);
+
+    // If the energy level is below the time level (e.g. 80% time left but 10% energy left)
+    // punish the agent with a a punishment relative to the level of the deficit, to discourage wasting battery.
+    float energyFrac = energyRemaining / maxEnergy;
+    float timeFrac = timeLeftMs / episodeLength;
+    if (energyFrac < timeFrac)
+    {
+        reward -= 5.0f * (timeFrac - energyFrac);
+    }
 
     return reward;
 }
@@ -71,6 +83,8 @@ int InertiaModulator::getBoundVariance(float rawVar)
         varLvl = 1;
     else
         varLvl = 2;
+
+    return varLvl;
 }
 
 void InertiaModulator::fillBuffer()
@@ -94,7 +108,7 @@ void InertiaModulator::fillBuffer()
 void InertiaModulator::resetBuffer()
 {
     // All non-empty values in reading buffer (up to rIdx) set to 0
-    for (int i = 0; i <= rIdx; i++)
+    for (int i = 0; i < rIdx; i++)
         rBuffer[i] = InertiaReadings{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     rIdx = 0;
 }
@@ -170,11 +184,12 @@ int InertiaModulator::resetEnvironment()
     resetBuffer();
     sensor.resetToDefaults();
     startTime = millis();
-    timeMsRemaining = random((20 * 1000 * 60), (40 * 1000 * 60)); // 20-40 Mins
+    episodeLength = random((20 * 1000 * 60), (40 * 1000 * 60)); // 20-40 Mins
+    timeLeftMs = episodeLength;
     energyRemaining = 10000;
 
     // variance lvl (0 at start)
-    return 0;
+    return getDiscreteEnergyLvl(energyRemaining) * 3;
 }
 
 int InertiaModulator::getDiscreteEnergyLvl(float energyLevel)
@@ -201,6 +216,6 @@ int InertiaModulator::getDiscreteEnergyLvl(float energyLevel)
         energyBin = 8;
     else
         energyBin = 9;
-    
+
     return energyBin;
 }

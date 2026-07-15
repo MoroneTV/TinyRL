@@ -23,13 +23,16 @@ struct InertiaFeedback {
     String avgGX = "X";
     String avgGY = "X";
     String avgGZ = "X";
+
+    String minsLeftInEp = "X";
+    String energyPercentLeft = "X";
 };
 
 
 
 class InertiaModulator {
     public:
-        InertiaModulator() {
+        InertiaModulator(float maxEnergy = 10000.0f) : maxEnergy(maxEnergy) {
         };
 
         void begin();
@@ -50,7 +53,7 @@ class InertiaModulator {
         };
 
         // Reward value is based on if the precison mode is reasonable given the battery level and activity variance.
-        float calculateReward();
+        float calculateReward(int varianceLvl, int action);
         
         // Sensor Management
         void fillBuffer();                    // Collect 1 sec of readings
@@ -63,8 +66,11 @@ class InertiaModulator {
 
         // Time and Energy
         int startTime;                   // time that the episode began
-        int timeMsRemaining;          // Amount of time left in episode. random between 20 and 40 minutes.
-        int energyRemaining;    // Amount of energy left in episode. Fuel gauge is unreliable so using virtual energy
+        int episodeLength;          // Amount of time left in episode. random between 20 and 40 minutes.
+        int timeLeftMs;
+        float energyRemaining;    // Amount of energy left in episode. Fuel gauge is unreliable so using virtual energy
+        float maxEnergy;
+        int getDiscreteEnergyLvl(float energyLevel); // Threshold energy into 10 bins for state.
 };
 
 #endif
