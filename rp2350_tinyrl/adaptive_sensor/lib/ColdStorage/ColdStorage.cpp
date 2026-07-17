@@ -13,8 +13,10 @@ bool ColdStorage::begin(String customQName, String customLogName)
     // Make required folders for q tables and logs
     if (!SD.exists("/q_files"))
         SD.mkdir("/q_files");
+        D_println("Created Directory: /q_files");
     if (!SD.exists("/logs"))
         SD.mkdir("/logs");
+        D_println("Created Directory: /logs");
 
     // If custom file names have been provided, use those. If not, use sequential naming
     if (customQName.isEmpty())
@@ -74,14 +76,13 @@ bool ColdStorage::writeQTable(std::vector<std::vector<float>> &q)
 
 std::vector<std::vector<float>> ColdStorage::getLatestQTable()
 {
-    Serial.println("KYS");
     std::vector<std::vector<float>> q;
 
     int num = 1;
     int latest = -1;
     String fileName = String("/q_files/q_tables") + num + ".txt";
 
-    // Find Q file with the highest iterator that has content saved to it/
+    // Find Q file with the highest iterator that has content saved to it
     while (true)
     {
         fileName = String("/q_files/q_tables") + num + ".txt";
@@ -110,7 +111,7 @@ std::vector<std::vector<float>> ColdStorage::getLatestQTable()
     if (latest == -1)
     {
         // No valid Q-table found, return empty table
-        Serial.println("Failed to open Q-table");
+        D_println("No valid Q tables found!");
         return q;
     }
 
@@ -119,11 +120,11 @@ std::vector<std::vector<float>> ColdStorage::getLatestQTable()
 
     if (!f)
     {
-        Serial.println("Failed to open Q-table");
+        D_println("Failed to open Q-table file");
         return q;
     }
 
-    Serial.println("READING FROM FILE: " + fileName);
+    D_println("Reading Q table from file: " + fileName);
 
     while (f.available())
     {
