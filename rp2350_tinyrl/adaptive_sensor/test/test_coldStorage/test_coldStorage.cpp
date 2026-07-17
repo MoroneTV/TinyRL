@@ -75,11 +75,6 @@ void test_writeAndReadQTable()
     coldStorage.writeQTable(q);
     std::vector<std::vector<float>> q_ = coldStorage.getLatestQTable();
 
-    Serial.println("OG:");
-    printQTable(q);
-    Serial.println("READ:");
-    printQTable(q_);
-
     TEST_ASSERT(qTablesEqual(q,q_));
 }
 
