@@ -1,21 +1,19 @@
 #include "InertialSensor.h"
 
 bool InertialSensor::begin()
-{   
-    Serial.println("BEGIN");
+{
+
     if (!lsm.begin())
     {
         D_println("Inertia sensor failure!");
         return false;
     }
 
-    Serial.println("RESET");
     // Reset to default parameters
     lsm.deviceReset();
     while (!lsm.getDeviceReset())
         delay(1);
 
-    Serial.println("CONFIG");
     // Accelerometer and Gyroscope registers will not be updated
     // until read.
     lsm.enableBlockDataUpdate();
@@ -31,11 +29,10 @@ bool InertialSensor::begin()
     lsm.enableGyroLP1Filter();
     lsm.setGyroLP1Bandwidth(LSM6DSV16X_GY_ULTRA_LIGHT);
 
-    Serial.println("CALIBRATE");
     // Calculate sensor offsets and set ODR
     updatePowerMode(getPowerMode());
     calibrate();
-    
+
     D_println("Inertia Setup Complete!");
     setStatus(true);
     return true;
@@ -53,12 +50,12 @@ void InertialSensor::update(int now)
         lsm.getAccel(&accelData);
         lsm.getGyro(&gyroData);
 
-        buffer[bPtr] = InertiaReading {
+        buffer[bPtr] = InertiaReading{
             // The library reads in milidegrees per second, so we convert to degrees per second.
             (accelData.xData - aXoffset) / 100.0f,
             (accelData.yData - aYoffset) / 100.0f,
             (accelData.zData - aZoffset) / 100.0f,
-            (gyroData.xData - gXoffset) / 100.0f, 
+            (gyroData.xData - gXoffset) / 100.0f,
             (gyroData.yData - gYoffset) / 100.0f,
             (gyroData.zData - gZoffset) / 100.0f,
         };
@@ -149,6 +146,47 @@ void InertialSensor::updatePowerMode(InertiaPowerLevel lvl)
     // Save powermode and update sample interval
     powerMode = lvl;
     updateSampleInterval(lvl);
+    updateCostPerTimestep(lvl);
+    updateScaledLevel(lvl);
 
     D_println("Inertia ODR set to: " + String(powerMode));
+}
+
+float InertialSensor::updateInterestingness()
+{
+
+    // Get variance of magnitudinal accel values in the buffer;
+
+    // Ensure we have a valid buffer size
+    if (getBufferPtr() <= 0)
+        return 0.0f;
+
+    // Compute magnitudes and mean
+    float mean = 0.0f;
+    for (int i = 0; i < getBufferPtr(); i++)
+    {
+        InertiaReading &r = buffer[i];
+        float mag = sqrtf(r.accelX * r.accelX + r.accelY * r.accelY + r.accelZ * r.accelZ);
+        mean += mag;
+    }
+    mean /= float(getBufferPtr());
+
+    // Compute variance
+    float var = 0.0f;
+    for (int i = 0; i < getBufferPtr(); i++)
+    {
+        InertiaReading &r = buffer[i];
+        float mag = sqrtf(r.accelX * r.accelX + r.accelY * r.accelY + r.accelZ * r.accelZ);
+        float d = mag - mean;
+        var += d * d;
+    }
+    var /= float(getBufferPtr());
+
+    const float midpoint = 1;
+    const float steepness = 3;
+
+    // Sigmoid-like mapping to an "interestingness" score
+    interestingness = 1.0f / (1.0f + expf(-steepness * (var - midpoint)));
+    return interestingness;
+
 }

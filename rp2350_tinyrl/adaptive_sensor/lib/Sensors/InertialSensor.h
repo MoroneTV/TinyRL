@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <SparkFun_LSM6DSV16X.h>
 #include <config.h>
+#include <VirtualSensor.h>
 
 struct InertiaReading {
     float accelX;
@@ -22,23 +23,32 @@ enum InertiaPowerLevel {
     HZ_240 = 4
 };
 
-class InertialSensor {
+class InertialSensor: public VirtualSensor {
 public:
-    InertialSensor(InertiaPowerLevel powerMode = HZ_7p5) : powerMode(powerMode) {}
+    InertialSensor(InertiaPowerLevel powerMode = HZ_7p5, float weight) : powerMode(powerMode), weight(weight) {}
 
     bool begin();
     void update(int now); // Add reading to buffer if necessary, takes time in ms
 
-    InertiaReading* getBuffer() { return buffer; }  // Returns buffer of readings. Max size 250.
-    int getBufferPtr() { return bPtr; }             // Returns the ptr to the last meaningful reading in the buffer
-
-    bool isEnabled()  { return status; }            // Is sensor on
-    InertiaPowerLevel getPowerMode()  { return powerMode; }
-
     void updatePowerMode(InertiaPowerLevel lvl);   // 0-5 for each ODR level
+    float updateInterestingness();
 
     // Empty the buffer and reset the buffer pointer to 0
     void clearBuffer() { for (int i = 0; i < 250; ++i) buffer[i] = InertiaReading(); bPtr = 0; }
+
+    // Status
+    bool isEnabled()  { return status; }            // Is sensor on
+    InertiaPowerLevel getPowerMode()  { return powerMode; }
+
+    // Buffer access
+    InertiaReading* getBuffer() { return buffer; }  // Returns buffer of readings. Max size 250.
+    int getBufferPtr() { return bPtr; }             // Returns the ptr to the last meaningful reading in the buffer
+
+    // Metadata
+    float getWeight() { return weight; }
+    float getInterestingness() { return interestingness; }
+    float getScaledLevel() { return scaledLevel; }
+    float getCostPerTimestep() { return costPerTimestep; }
 
 private:
     SparkFun_LSM6DSV16X lsm; // Sensor being wrapped
@@ -59,6 +69,26 @@ private:
     };
     void updateSampleInterval(InertiaPowerLevel lvl) { sampleInterval = HzToMs[lvl]; }
 
+    // Mapping of ODR (Hz) to scaled level between 0 and 1
+    std::unordered_map<InertiaPowerLevel,float> HzToScaledLevel = {
+        {HZ_7p5, 0},   
+        {HZ_15, 0.0625},   
+        {HZ_60, 0.25},
+        {HZ_120, 0.5},
+        {HZ_240, 1}    
+    };
+    void updateScaledLevel(InertiaPowerLevel lvl) { scaledLevel = HzToScaledLevel[lvl]; }
+
+    // Mapping of ODR (Hz) to cost per timestep
+    std::unordered_map<InertiaPowerLevel,float> HzToCostPerTimestep = {
+        {HZ_7p5, 1},   
+        {HZ_15, 2},   
+        {HZ_60, 8},
+        {HZ_120, 16},
+        {HZ_240, 32}    
+    };
+    void updateCostPerTimestep(InertiaPowerLevel lvl) { costPerTimestep = HzToCostPerTimestep[lvl]; }
+
     // OFFSETS AND CALIBRATION
     float aXoffset = 0.0f;                       
     float aYoffset = 0.0f;
@@ -72,6 +102,10 @@ private:
     bool status = false; // Is sensor on
     void setStatus(bool s) { status = s; }
     InertiaPowerLevel powerMode;
+    float scaledLevel;
+    float costPerTimestep;
+    float weight;
+    float interestingness;
 
 };
 
