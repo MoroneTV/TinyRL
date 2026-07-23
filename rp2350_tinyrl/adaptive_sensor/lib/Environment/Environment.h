@@ -2,17 +2,27 @@
 #define ENVIRONMENT_H
 
 #include <vector>
-#include <VirtualSensor.h>
+#include <Sensor.h>
+#include <SensorWeights.h>
+#include <SensorController.h>
 
 class Environment {
 public:
-    Environment();
+        Environment(SensorWeights weights, float conservatism, float energyBudget, int msPerEpisode)
+        
+        : conservatism(conservatism), energyBudget(energyBudget), msPerEpisode(msPerEpisode),
+            sensorController(new SensorController(weights)) {
+        }
+        ;
 
 private:
 
-std::vector<Sensor> sensors;
 float conservatism;
 float batteryFrac;
+float energyBudget = 0.0f;
+int msPerEpisode = 0;
+
+SensorController sensorController;
 
 
 };
