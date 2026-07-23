@@ -4,8 +4,10 @@
 #include <unordered_map>
 #include <SparkFun_LSM6DSV16X.h>
 #include <config.h>
-#include <VirtualSensor.h>
+#include <Sensor.h>
+#include <SensorObservations.h>
 
+// Sensor specific structs
 struct InertiaReading {
     float accelX;
     float accelY;
@@ -25,26 +27,42 @@ enum InertiaPowerLevel {
 
 class InertialSensor: public Sensor {
 public:
-    InertialSensor(InertiaPowerLevel powerMode = HZ_7p5, float weight) : powerMode(powerMode), weight(weight) {}
+    InertialSensor(InertiaPowerLevel powerMode = HZ_7p5, float weight, int id) 
+    : powerMode(powerMode), weight(weight), id(id) {}
 
     bool begin();
     void update(int now); // Add reading to buffer if necessary, takes time in ms
-
-    InertiaReading* getBuffer() { return buffer; }  // Returns buffer of readings. Max size 250.
-    int getBufferPtr() { return bPtr; }             // Returns the ptr to the last meaningful reading in the buffer
-
-    bool isEnabled()  { return status; }            // Is sensor on
-    int getRawLvl()  { return powerMode; }
+    // Empty the buffer and reset the buffer pointer to 0
+    void clearBuffer() { for (int i = 0; i < 250; ++i) buffer[i] = InertiaReading(); bPtr = 0; }
 
     void setLvl(int lvl);   // 0-5 for each ODR level
 
+    // Class-specific getters
+    InertiaReading* getBuffer() { return buffer; }  // Returns buffer of readings. Max size 250.
+    int getBufferPtr() { return bPtr; }             // Returns the ptr to the last meaningful reading in the buffer
+
+    // Inherited Sensor getters
+    bool isEnabled()  { return status; }            // Is sensor on
+    int getRawLvl()  { return powerMode; }
     float getWeight() { return weight; }
     float getInterestingness(); // Calculate and return 'interestingness' of data in buffer.
     float getScaledLvl() { return scaledLevel; }
     float getFlatCost() { return costPerTimestep; }
+    int getId()   { return id; }
+    String getName() { return name; }
 
-    // Empty the buffer and reset the buffer pointer to 0
-    void clearBuffer() { for (int i = 0; i < 250; ++i) buffer[i] = InertiaReading(); bPtr = 0; }
+    SensorState getState() {
+        SensorState state;
+        state.sensorIdx = id;
+        state.sensorName = name;
+        state.isEnabled = status;
+        state.weight = weight;
+        state.interestingness = interestingness;
+        state.scaledLvl = scaledLevel;
+        state.rawLvl = static_cast<int>(powerMode);
+        state.FlatCost = costPerTimestep;
+        return state;
+    }
 
 private:
     SparkFun_LSM6DSV16X lsm; // Sensor being wrapped
@@ -102,6 +120,8 @@ private:
     float costPerTimestep;  // How many virtual energy points this sensor costs per timestep, based on powermode
     float weight;           // How much does the agent prioritse this sensor? should be between 0 and 1.
     float interestingness;  // How much movement is happening based on the buffer variance?
+    int id;                 // Numerical ID for sensor- used for the agent to be able to index it.
+    String name = "inertia"; // Sensor name, primarily used for debugging;
 
 };
 
