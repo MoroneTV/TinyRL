@@ -9,11 +9,17 @@
 class SensorController
 {
 public:
-    SensorController(SensorWeights weights) : inertia(new InertialSensor(HZ_7p5, weights.getInertiaW())) {}
+    SensorController(SensorWeights weights) : inertia(HZ_7p5, weights.getInertiaW(), 1) {}
     bool begin();
 
+    // Collects 1 second's worth of information
+    SensorObservation collectData();
+
+    // Adjust sensor resolution either up or down one level.
+    void updateSensorSettings(int id, int dir);
+
 private:
-    InertialSensor* inertia;
+    InertialSensor inertia;
 };
 
 #endif
