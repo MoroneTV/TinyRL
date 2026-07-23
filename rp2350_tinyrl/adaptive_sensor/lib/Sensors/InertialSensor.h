@@ -23,32 +23,28 @@ enum InertiaPowerLevel {
     HZ_240 = 4
 };
 
-class InertialSensor: public VirtualSensor {
+class InertialSensor: public Sensor {
 public:
     InertialSensor(InertiaPowerLevel powerMode = HZ_7p5, float weight) : powerMode(powerMode), weight(weight) {}
 
     bool begin();
     void update(int now); // Add reading to buffer if necessary, takes time in ms
 
-    void updatePowerMode(InertiaPowerLevel lvl);   // 0-5 for each ODR level
-    float updateInterestingness();
-
-    // Empty the buffer and reset the buffer pointer to 0
-    void clearBuffer() { for (int i = 0; i < 250; ++i) buffer[i] = InertiaReading(); bPtr = 0; }
-
-    // Status
-    bool isEnabled()  { return status; }            // Is sensor on
-    InertiaPowerLevel getPowerMode()  { return powerMode; }
-
-    // Buffer access
     InertiaReading* getBuffer() { return buffer; }  // Returns buffer of readings. Max size 250.
     int getBufferPtr() { return bPtr; }             // Returns the ptr to the last meaningful reading in the buffer
 
-    // Metadata
+    bool isEnabled()  { return status; }            // Is sensor on
+    int getRawLvl()  { return powerMode; }
+
+    void setLvl(int lvl);   // 0-5 for each ODR level
+
     float getWeight() { return weight; }
-    float getInterestingness() { return interestingness; }
-    float getScaledLevel() { return scaledLevel; }
-    float getCostPerTimestep() { return costPerTimestep; }
+    float getInterestingness(); // Calculate and return 'interestingness' of data in buffer.
+    float getScaledLvl() { return scaledLevel; }
+    float getFlatCost() { return costPerTimestep; }
+
+    // Empty the buffer and reset the buffer pointer to 0
+    void clearBuffer() { for (int i = 0; i < 250; ++i) buffer[i] = InertiaReading(); bPtr = 0; }
 
 private:
     SparkFun_LSM6DSV16X lsm; // Sensor being wrapped
@@ -102,10 +98,10 @@ private:
     bool status = false; // Is sensor on
     void setStatus(bool s) { status = s; }
     InertiaPowerLevel powerMode;
-    float scaledLevel;
-    float costPerTimestep;
-    float weight;
-    float interestingness;
+    float scaledLevel;      // sensor powermode mapped to be between 0 and 1 for reward calculations
+    float costPerTimestep;  // How many virtual energy points this sensor costs per timestep, based on powermode
+    float weight;           // How much does the agent prioritse this sensor? should be between 0 and 1.
+    float interestingness;  // How much movement is happening based on the buffer variance?
 
 };
 

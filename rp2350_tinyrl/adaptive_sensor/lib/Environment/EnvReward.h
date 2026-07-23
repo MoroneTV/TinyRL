@@ -1,13 +1,22 @@
 #ifndef ENV_REWARD_H
 #define ENV_REWARD_H
 
-class EnvReward {
+#include <Environment.h>
+
+class EnvReward
+{
 public:
     EnvReward();
-    ~EnvReward();
 
-    float calculateReward();
-    void reset();
+    float getReward() { return reward; }
+
+    float calculateReward(
+        std::vector<Sensor> sensors,
+        float conservatism,
+        float batteryFrac
+    );
+
+    void reset() { reward = 0.0f; }
 
 private:
     float reward;

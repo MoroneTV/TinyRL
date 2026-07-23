@@ -30,7 +30,7 @@ bool InertialSensor::begin()
     lsm.setGyroLP1Bandwidth(LSM6DSV16X_GY_ULTRA_LIGHT);
 
     // Calculate sensor offsets and set ODR
-    updatePowerMode(getPowerMode());
+    setLvl(getRawLvl());
     calibrate();
 
     D_println("Inertia Setup Complete!");
@@ -69,8 +69,8 @@ void InertialSensor::calibrate()
 {
     D_println("Starting Inertia Calibration");
 
-    InertiaPowerLevel originalPowerMode = getPowerMode();
-    updatePowerMode(HZ_240); // Max res just for this period
+    int originalPowerMode = getRawLvl();
+    setLvl(HZ_240); // Max res just for this period
     delay(1000);             // Wait for the sensor to stabilize
 
     // Collect 100 readings at slight increment to get average offsets
@@ -108,15 +108,24 @@ void InertialSensor::calibrate()
     gYoffset = avgGy / 100.0f;
     gZoffset = avgGz / 100.0f;
 
-    updatePowerMode(originalPowerMode); // Revert to whatever power mode we started with
+    setLvl(originalPowerMode); // Revert to whatever power mode we started with
 
     D_println("Inertia Calibration Complete!");
 }
 
-void InertialSensor::updatePowerMode(InertiaPowerLevel lvl)
+void InertialSensor::setLvl(int lvl)
 {
+
+    // Catch out of bounds
+    if (lvl < 0 || lvl > 4) {
+        D_println("Provided Inertia lvl out of scope 0-4: " + String(lvl));
+        return;
+    }
+
+    InertiaPowerLevel lvl_ = static_cast<InertiaPowerLevel>(lvl);
+
     // Different ODR rates per level, Gyro off on the lowest mode.
-    switch (lvl)
+    switch (lvl_)
     {
     case HZ_7p5:
         lsm.setAccelDataRate(LSM6DSV16X_ODR_AT_7Hz5);
@@ -144,10 +153,10 @@ void InertialSensor::updatePowerMode(InertiaPowerLevel lvl)
         break;
     }
     // Save powermode and update sample interval
-    powerMode = lvl;
-    updateSampleInterval(lvl);
-    updateCostPerTimestep(lvl);
-    updateScaledLevel(lvl);
+    powerMode = lvl_;
+    updateSampleInterval(lvl_);
+    updateCostPerTimestep(lvl_);
+    updateScaledLevel(lvl_);
 
     D_println("Inertia ODR set to: " + String(powerMode));
 }
