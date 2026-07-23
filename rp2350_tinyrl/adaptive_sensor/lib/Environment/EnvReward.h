@@ -13,7 +13,8 @@ public:
     float calculateReward(
         std::vector<Sensor> sensors,
         float conservatism,
-        float batteryFrac
+        float batteryFrac,
+        bool successfulCompletion
     );
 
     void reset() { reward = 0.0f; }
