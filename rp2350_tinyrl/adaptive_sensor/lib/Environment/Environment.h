@@ -19,8 +19,9 @@ public:
     {
     }
 
-    // Take one timestep (1000ms)
-    RawState step(int action);
+    
+    Feedback step(int action);  // Take one timestep (1000ms)
+    void resetEnv();             // Reset environement back to default
 
 private:
 
@@ -29,8 +30,10 @@ private:
     int msPerEpisode = 0; // How many ms should an episode be?
     int msLeftInEpisode;  // How many ms are left in the episode?
 
-    float batteryFrac;          // How much of the energy budget is remaining?
+    float energyLeftInEpisode;          // How much of the energy budget is remaining?
     float batteryBudget = 0.0f; // Virtual energy source so i don't have to rely on imperfect fuel gauge readings.
+
+    State prevState;    // State from previous timestep.
 
     SensorController *sensorController;
     RewardCalculator rewardCalculator;
