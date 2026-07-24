@@ -6,43 +6,41 @@ float RewardCalculator::calculate(
     std::vector<SensorState> sensors,
     float conservatism,
     float batteryFrac,
-    CompletionState completionState
+    EpisodeCompletion completionState
 )
 {  
 
+    float reward = 0.0f;
+
     for (SensorState& s : sensors) {
 
-        float value = 0.0f; // Value the sensor has brought this timestep
+        float value = 0.0f; // Overall value the sensor has brought this timestep
         float match = 0.0f; // Match between sensor power lvl and interestingness lvl
         
         match = (1-abs(s.interestingness - s.scaledLvl));    // good match = 1, poor match = 0
         value = s.weight * match;   // Value is the match scaled by the sensor's weight.
 
         float cost = 0.0f;  // Overall cost of using the sensor at this timestep
-        float power = 1 - batteryFrac;  // Cost is scaled by the amount of battery left in episode
+        float costScale = conservatism * (1-batteryFrac); // Weight of cost determined by battery level and conservatism modifier
 
-        cost = conservatism * s.flatCost
+        cost = s.flatCost * costScale;
 
-
-        total += v-c;
+        // Overall sensor reward is value the sensor brings - the cost it takes to run it
+        reward += value - cost;
     }
 
+    // If the episode is over, punish or reward the agent with a bonus.
+    switch (completionState)
+    {
+    case SUCCESS:
+        reward += 200;
+        break;
+    case FAILURE:
+        reward -= 200;
+        break;
+    default:    // Incomplete episode
+        break;
+    }
 
+    return reward;
 }
-
-
-    float total = 0.0f;
-    float v = 0.0f;
-    float c = 0.0f;
-
-    for (Sensor& s : sensors) {
-
-        v = s.getWeight() * (1-abs(s.getInterestingness() - s.getScaledLvl()));
-        c = conservatism * (1-batteryFrac) * s.getFlatCost();
-
-        total += v-c;
-    }
-
-    if (successfulCompletion) total += 200;
-
-    return total;

@@ -6,21 +6,15 @@
 class RewardCalculator
 {
 public:
-    RewardCalculator();
-
-    float getReward() { return reward; }
-
-    float calculateReward(
-        std::vector<Sensor> sensors,
+    RewardCalculator() {};
+    float calculate(
+        std::vector<SensorState> sensors,
         float conservatism,
         float batteryFrac,
-        bool successfulCompletion
+        EpisodeCompletion successfulCompletion
     );
 
-    void reset() { reward = 0.0f; }
-
 private:
-    float reward;
 };
 
 #endif // REWARD_CALCULATOR_H
