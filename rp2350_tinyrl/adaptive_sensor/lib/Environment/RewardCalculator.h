@@ -1,12 +1,12 @@
-#ifndef ENV_REWARD_H
-#define ENV_REWARD_H
+#ifndef REWARD_CALCULATOR_H
+#define REWARD_CALCULATOR_H
 
 #include <Environment.h>
 
-class EnvReward
+class RewardCalculator
 {
 public:
-    EnvReward();
+    RewardCalculator();
 
     float getReward() { return reward; }
 
@@ -23,4 +23,4 @@ private:
     float reward;
 };
 
-#endif // ENV_REWARD_H
+#endif // REWARD_CALCULATOR_H
