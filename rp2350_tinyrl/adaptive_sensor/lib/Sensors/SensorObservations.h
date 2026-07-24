@@ -7,7 +7,7 @@
 
 // Fields that we can expect all sensors to have, making it iterable
 struct SensorState {
-    int sensorIdx;
+    int sensorId;
     String sensorName = "NULL";
     bool isEnabled = false;
 
@@ -15,16 +15,17 @@ struct SensorState {
     float interestingness;
     float scaledLvl;
     int rawLvl;
-    float FlatCost;
+    float flatCost;
 };
 
 struct SensorObservation {
-    std::vector<SensorState
-}
+    // State data, used for guiding program flow and updating the model
+    std::vector<SensorState> sensorStateData;
 
-
-
-
+    // Individual readings, goes to output sources like screen, SD, or network.
+    InertiaReading* inertiaReadings;
+    int inertiaReadingPtr;
+};
 
 
 #endif

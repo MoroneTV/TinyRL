@@ -9,28 +9,46 @@ class SensorWeights
 {
 private:
 
-    bool isValid = false;
+    bool valid = false;
     float inertiaW;
     float airQualityW;
     float obstacleW;
     
 public:
-    SensorWeights(std::array<float,3> weights = {0.0f, 0.0f, 0.0f}) {
-        inertiaW = weights[0];
-        airQualityW = weights[1];
-        obstacleW = weights[2];
-        isValid = true;
-    }
+    // Weight array in order {Inertia, AirQ, Obstacle}. Weights must not be negative and at least one must be above 0.
+    SensorWeights(std::array<float, 3> weights = {0.0f, 0.0f, 0.0f}) {
+
+        // Weights cannot be negative, default to 0
+        // Add all weights together- at least one weight must be above 0.
+        float sum = 0.0f;
+        for (float& weight : weights) {
+            
+            if (weight < 0.0f) {
+                D_println("Negative weight detected, defautling to 0.");
+                weight = 0.0f;
+            }
+            sum += weight;
+        }
+
+        if (sum <= 0.0f) {
+            D_println("All weights are 0. At least one sensor must be enabled.");
+            return;
+        }
+
+        else {
+
+            inertiaW    = weights[0] / sum;
+            airQualityW = weights[1] / sum;
+            obstacleW   = weights[2] / sum;
+
+            valid = true;
+        }
+    };
 
     float getInertiaW() { return inertiaW; }
     float getAirQualityW() { return airQualityW; } 
     float getObstacleW() { return obstacleW; } 
-    bool validWeights() { return isValid; } 
-
-
-
-
-
+    bool isValid() { return valid; } 
 };
 
 #endif
