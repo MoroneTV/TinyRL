@@ -1,5 +1,6 @@
-// SensorController.cpp
+
 #include "SensorController.h"
+#include "EnvStructs.h"
 
 bool SensorController::begin()
 {
@@ -32,4 +33,15 @@ SensorObservation SensorController::collectData() {
 
     // Cleanup tasks
     inertia.clearBuffer();
+}
+
+void SensorController::updateSensorSettings(int id, SensorDir dir) {
+    
+    for (Sensor* sensor : sensors) {
+        if (sensor->getId() == id) {
+            if (dir == UP) sensor->setLvl(sensor->getRawLvl()+1);
+            else sensor->setLvl(sensor->getRawLvl()-1);
+        }
+    }
+
 }

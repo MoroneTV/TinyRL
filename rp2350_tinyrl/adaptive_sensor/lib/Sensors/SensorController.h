@@ -19,7 +19,7 @@ public:
     SensorObservation collectData();
 
     // Adjust sensor resolution either up or down one level.
-    void updateSensorSettings(int id, int dir);
+    void updateSensorSettings(int id, SensorDir dir);
 
 private:
     InertialSensor inertia;
