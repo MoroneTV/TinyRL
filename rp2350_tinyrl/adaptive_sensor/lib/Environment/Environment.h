@@ -5,8 +5,9 @@
 #include <Sensor.h>
 #include <SensorWeights.h>
 #include <SensorController.h>
-#include <EnvReward.h>
-#include <EnvState.h>
+#include <RewardCalculator.h>
+#include <StateCalculator.h>
+#include <EnvStructs.h>
 
 class Environment
 {
@@ -19,11 +20,9 @@ public:
     }
 
     // Take one timestep (1000ms)
-    EnvState step(int action);
+    RawState step(int action);
 
 private:
-    EnvReward calculateReward();
-    EnvState calculateState();
 
     float conservatism = 0.0f; // How much should battery penalty be scaled in reward calculation? 0.0f = battery is not considered.
 
@@ -34,6 +33,8 @@ private:
     float batteryBudget = 0.0f; // Virtual energy source so i don't have to rely on imperfect fuel gauge readings.
 
     SensorController *sensorController;
+    RewardCalculator rewardCalculator;
+    StateCalculator stateCalculator;
 };
 
 #endif // ENVIRONMENT_H
