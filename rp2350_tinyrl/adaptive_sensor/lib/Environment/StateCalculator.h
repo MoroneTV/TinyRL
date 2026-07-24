@@ -11,7 +11,9 @@ public:
 
     State calculate(
         std::vector<SensorState> sensors,
-        float batteryFrac
+        float batteryFrac,
+        int timeRemaining,
+        float energyRemaining
     );
 
 private:
