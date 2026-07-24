@@ -161,7 +161,7 @@ void InertialSensor::setLvl(int lvl)
     D_println("Inertia ODR set to: " + String(powerMode));
 }
 
-float InertialSensor::updateInterestingness()
+float InertialSensor::getInterestingness()
 {
 
     // Get variance of magnitudinal accel values in the buffer;

@@ -53,14 +53,14 @@ public:
 
     SensorState getState() {
         SensorState state;
-        state.sensorIdx = id;
+        state.sensorId = id;
         state.sensorName = name;
         state.isEnabled = status;
         state.weight = weight;
-        state.interestingness = interestingness;
+        state.interestingness = getInterestingness();
         state.scaledLvl = scaledLevel;
         state.rawLvl = static_cast<int>(powerMode);
-        state.FlatCost = costPerTimestep;
+        state.flatCost = costPerTimestep;
         return state;
     }
 
