@@ -116,11 +116,9 @@ void InertialSensor::calibrate()
 void InertialSensor::setLvl(int lvl)
 {
 
-    // Catch out of bounds
-    if (lvl < 0 || lvl > 4) {
-        D_println("Provided Inertia lvl out of scope 0-4: " + String(lvl));
-        return;
-    }
+    // Keep lvl in bounds
+    if (lvl < 0) lvl = 0;
+    if (lvl > 4) lvl = 4;
 
     InertiaPowerLevel lvl_ = static_cast<InertiaPowerLevel>(lvl);
 
