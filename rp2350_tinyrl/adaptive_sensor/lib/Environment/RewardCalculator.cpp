@@ -9,7 +9,6 @@ float RewardCalculator::calculate(
     EpisodeCompletion completionState
 )
 {  
-
     float reward = 0.0f;
 
     for (SensorState& s : sensors) {
@@ -25,7 +24,7 @@ float RewardCalculator::calculate(
 
         cost = s.flatCost * costScale;
 
-        // Overall sensor reward is value the sensor brings - the cost it takes to run it
+        // Overall sensor reward is (value the sensor brings) - (the cost it takes to run it)
         reward += value - cost;
     }
 

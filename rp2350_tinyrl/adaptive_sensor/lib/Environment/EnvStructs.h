@@ -18,6 +18,11 @@ struct State {
     int drainRate;        // How many energy units are being used per timestep (5 bins)
     int currentBattery;   // Current battery level (5 x 20% bins)
 
+    int timeRemaining;     // Time left in episode (MS)
+    float energyRemaining; // energy units left in episode
+
+    EpisodeCompletion epState;  // Is episode complete? if it is, did it succeed or fail?
+
     int encodedState;   // Integer representing overall state
 };
 
@@ -26,6 +31,12 @@ struct Feedback {
     float newState;
     float reward;
     bool isDone;
+};
+
+// Increase or decrease sensor lvl?
+enum SensorDir {
+    UP = 0,
+    DOWN = 1
 };
 
 #endif
