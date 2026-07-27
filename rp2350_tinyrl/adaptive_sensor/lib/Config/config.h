@@ -1,24 +1,30 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// DEBUG PRINTS, Stolen from user J_M_L on the arduino forums, found here:
-// https://forum.arduino.cc/t/managing-serial-print-as-a-debug-tool/1024824/2
-
-#define DEBUG 1    // SET TO 0 OUT TO REMOVE TRACES
-#if DEBUG
-#define D_SerialBegin(...) Serial.begin(__VA_ARGS__);
-#define D_print(...)    Serial.print(__VA_ARGS__)
-#define D_write(...)    Serial.write(__VA_ARGS__)
-#define D_println(...)  Serial.println(__VA_ARGS__)
-#else
-#define D_SerialBegin(...)
-#define D_print(...)
-#define D_write(...)
-#define D_println(...)
-#endif
+#include "SensorWeights.h"
 
 // Runtime Consts
-#define EPISODE_COUNT 5 // Number of training episodes before halting
-#define COLD_STORAGE_ON true // Save logs and Q-Table values to cold storage
+static const bool LOAD_LATEST_Q_TABLE = false;
+
+static const int MINS_PER_EP = 40;
+static const int MS_PER_EP = (MINS_PER_EP * 60000);
+static const int EP_COUNT = 5; // Training concludes after this many episodes
+static const float ENERGY_PER_EP = 10000.0f;
+
+// Weights per sensor, affects which sensor/s the agent priortises. 0 = sensor disabled.
+static const float INERTIA_WEIGHT = 1.0f;
+static const float AIR_QUALITY_WEIGHT = 0.0f;
+static const float OBSTACLE_WEIGHT = 0.0f;
+
+// Training hyperparameters (Env)
+static const float CONSERVATISM = 3.0f; // How much does the agent priortise saving energy? 0.0f = no consideration for energy
+static const SensorWeights SENSOR_WEIGHTS{std::array<float, 3>{INERTIA_WEIGHT, AIR_QUALITY_WEIGHT, OBSTACLE_WEIGHT}};
+
+// Training hyperparameters (Agent)
+static const float EPSILON = 0.1f;
+static const float GAMMA = 0.99f;
+static const float LR = 0.1f;
+static const int NO_OF_ACTIONS = 3;
+static const int NO_OF_STATES = 2500;
 
 #endif
