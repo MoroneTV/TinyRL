@@ -3,32 +3,16 @@
 
 #include <unordered_map>
 #include <SparkFun_LSM6DSV16X.h>
-#include <config.h>
-#include <Sensor.h>
-#include <SensorObservations.h>
+#include "config.h"
+#include "Sensor.h"
+#include "SensorStructs.h"
 
-// Sensor specific structs
-struct InertiaReading {
-    float accelX;
-    float accelY;
-    float accelZ;
-    float gyroX;
-    float gyroY;
-    float gyroZ;
-};
 
-enum InertiaPowerLevel {
-    HZ_7p5 = 0,
-    HZ_15 = 1,
-    HZ_60 = 2,
-    HZ_120 = 3,
-    HZ_240 = 4
-};
 
 class InertialSensor: public Sensor {
 public:
-    InertialSensor(InertiaPowerLevel powerMode = HZ_7p5, float weight, int id) 
-    : powerMode(powerMode), weight(weight), id(id) {}
+    InertialSensor(InertiaPowerLevel powerMode = HZ_7p5, float weight = 0.0f) 
+    : powerMode(powerMode), weight(weight) {}
 
     bool begin();
     void update(int now); // Add reading to buffer if necessary, takes time in ms
@@ -36,6 +20,7 @@ public:
     void clearBuffer() { for (int i = 0; i < 250; ++i) buffer[i] = InertiaReading(); bPtr = 0; }
 
     void setLvl(int lvl);   // 0-5 for each ODR level
+    void setId(int id) { this->id = id; }
 
     // Class-specific getters
     InertiaReading* getBuffer() { return buffer; }  // Returns buffer of readings. Max size 250.
@@ -120,7 +105,7 @@ private:
     float costPerTimestep;  // How many virtual energy points this sensor costs per timestep, based on powermode
     float weight;           // How much does the agent prioritse this sensor? should be between 0 and 1.
     float interestingness;  // How much movement is happening based on the buffer variance?
-    int id;                 // Numerical ID for sensor- used for the agent to be able to index it.
+    int id = -1;                 // Numerical ID for sensor- used for the agent to be able to index it.
     String name = "inertia"; // Sensor name, primarily used for debugging;
 
 };

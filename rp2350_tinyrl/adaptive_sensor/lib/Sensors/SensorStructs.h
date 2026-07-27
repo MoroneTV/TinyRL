@@ -1,9 +1,26 @@
-#ifndef SENSOR_OBSERVATION_H
-#define SENSOR_OBSERVATION_H
+#ifndef SENSOR_STRUCTS_H
+#define SENSOR_STRUCTS_H
 
 #include <Arduino.h>
 #include <vector>
-#include <InertialSensor.h>
+
+// Sensor specific structs
+struct InertiaReading {
+    float accelX;
+    float accelY;
+    float accelZ;
+    float gyroX;
+    float gyroY;
+    float gyroZ;
+};
+
+enum InertiaPowerLevel {
+    HZ_7p5 = 0,
+    HZ_15 = 1,
+    HZ_60 = 2,
+    HZ_120 = 3,
+    HZ_240 = 4
+};
 
 // Fields that we can expect all sensors to have, making it iterable
 struct SensorState {
@@ -25,6 +42,12 @@ struct SensorObservation {
     // Individual readings, goes to output sources like screen, SD, or network.
     InertiaReading* inertiaReadings;
     int inertiaReadingPtr;
+};
+
+// Increase or decrease sensor lvl?
+enum SensorDir {
+    UP = 0,
+    DOWN = 1
 };
 
 

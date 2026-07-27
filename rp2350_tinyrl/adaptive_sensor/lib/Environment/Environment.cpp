@@ -22,19 +22,21 @@ Feedback Environment::step(int action)
     // Collect observation with new settings
     SensorObservation o = sensorController->collectData();
 
-    // Determine new state
+    // Determine new state, update time and energy values
     State s = stateCalculator.calculate(
         o.sensorStateData, 
-        (energyLeftInEpisode / batteryBudget),
+        (energyLeftInEpisode / energyPerEpisode),
         msLeftInEpisode,
-        batteryBudget
+        energyPerEpisode
     );
+    energyPerEpisode = s.energyRemaining;
+    msLeftInEpisode = s.timeRemaining;
 
     // Calculate reward
     float r = rewardCalculator.calculate(
         o.sensorStateData,
         conservatism,
-        (energyLeftInEpisode / batteryBudget),
+        (energyLeftInEpisode / energyPerEpisode),
         s.epState
     );
 
@@ -46,5 +48,29 @@ Feedback Environment::step(int action)
 
     // State becomes the new previous state
     prevState = s;
+
+    return f;
+}
+
+State Environment::resetEnv() {
+    
+    // Reset energy and time
+    msLeftInEpisode = msPerEpisode;
+    energyLeftInEpisode = energyPerEpisode;
+
+    // Reset Sensors
+    sensorController->resetSensors();
+
+    // Make fresh state
+    SensorObservation o = sensorController->collectData();
+    prevState = stateCalculator.calculate(
+        o.sensorStateData,
+        (energyLeftInEpisode / energyPerEpisode),
+        msLeftInEpisode,
+        energyLeftInEpisode
+    );
+
+    // return state
+    return prevState;
 }
 

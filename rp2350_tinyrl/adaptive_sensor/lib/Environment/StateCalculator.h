@@ -1,9 +1,10 @@
 #ifndef STATECALCULATOR_H
 #define STATECALCULATOR_H
 
-#include <Environment.h>
 #include <vector>
 #include <tuple>
+#include "EnvStructs.h"
+#include "SensorStructs.h"
 
 class StateCalculator {
 public:

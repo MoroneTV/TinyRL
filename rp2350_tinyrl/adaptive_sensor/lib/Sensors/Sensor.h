@@ -1,8 +1,7 @@
 #ifndef SENSOR_H
 #define SENSOR_H
 
-#include <InertialSensor.h>
-#include <SensorObservations.h>
+#include <SensorStructs.h>
 
 class Sensor {
 public:
@@ -10,6 +9,7 @@ public:
     virtual bool begin() = 0;
     virtual void update(int now) = 0;
     virtual void setLvl(int lvl) = 0;
+    virtual void setId(int id) = 0;
 
     virtual int getRawLvl() = 0;
     virtual float getWeight() = 0;
@@ -25,4 +25,4 @@ public:
 
 
 
-#endif // VIRTUALSENSOR_H
+#endif

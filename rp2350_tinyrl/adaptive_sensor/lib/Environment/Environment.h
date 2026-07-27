@@ -2,7 +2,6 @@
 #define ENVIRONMENT_H
 
 #include <vector>
-#include <Sensor.h>
 #include <SensorWeights.h>
 #include <SensorController.h>
 #include <RewardCalculator.h>
@@ -12,16 +11,15 @@
 class Environment
 {
 public:
-    Environment(SensorWeights weights, float conservatism, float batteryBudget, int msPerEpisode)
+    Environment(SensorWeights weights, float conservatism, float energyPerEpisode, int msPerEpisode)
 
-        : conservatism(conservatism), batteryBudget(batteryBudget), msPerEpisode(msPerEpisode),
+        : conservatism(conservatism), energyPerEpisode(energyPerEpisode), msPerEpisode(msPerEpisode),
           sensorController(new SensorController(weights))
     {
     }
 
-    
     Feedback step(int action);  // Take one timestep (1000ms)
-    void resetEnv();             // Reset environement back to default
+    State resetEnv();             // Reset environement back to default
 
 private:
 
@@ -31,7 +29,7 @@ private:
     int msLeftInEpisode;  // How many ms are left in the episode?
 
     float energyLeftInEpisode;          // How much of the energy budget is remaining?
-    float batteryBudget = 0.0f; // Virtual energy source so i don't have to rely on imperfect fuel gauge readings.
+    float energyPerEpisode = 0.0f; // Virtual energy source so i don't have to rely on imperfect fuel gauge readings.
 
     State prevState;    // State from previous timestep.
 

@@ -1,7 +1,7 @@
 #ifndef SENSOR_WEIGHTS_H
 #define SENSOR_WEIGHTS_H
 
-#include <config.h>
+#include <debug.h>
 #include <Arduino.h>
 #include <array>
 

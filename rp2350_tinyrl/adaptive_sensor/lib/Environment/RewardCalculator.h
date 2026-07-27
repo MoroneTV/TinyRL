@@ -1,7 +1,9 @@
 #ifndef REWARD_CALCULATOR_H
 #define REWARD_CALCULATOR_H
 
-#include <Environment.h>
+#include <EnvStructs.h>
+#include <SensorStructs.h>
+#include <vector>
 
 class RewardCalculator
 {
