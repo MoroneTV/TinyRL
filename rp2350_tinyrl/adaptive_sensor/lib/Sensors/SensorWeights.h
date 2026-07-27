@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <array>
 
+
 class SensorWeights
 {
 private:
@@ -15,6 +16,7 @@ private:
     float obstacleW;
     
 public:
+
     // Weight array in order {Inertia, AirQ, Obstacle}. Weights must not be negative and at least one must be above 0.
     SensorWeights(std::array<float, 3> weights = {0.0f, 0.0f, 0.0f}) {
 
@@ -24,14 +26,12 @@ public:
         for (float& weight : weights) {
             
             if (weight < 0.0f) {
-                D_println("Negative weight detected, defautling to 0.");
                 weight = 0.0f;
             }
             sum += weight;
         }
 
         if (sum <= 0.0f) {
-            D_println("All weights are 0. At least one sensor must be enabled.");
             return;
         }
 

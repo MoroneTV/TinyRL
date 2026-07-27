@@ -13,10 +13,11 @@ class Environment
 public:
     Environment(SensorWeights weights, float conservatism, float energyPerEpisode, int msPerEpisode)
 
-        : conservatism(conservatism), energyPerEpisode(energyPerEpisode), msPerEpisode(msPerEpisode),
-          sensorController(new SensorController(weights))
+        : weights(weights), conservatism(conservatism), energyPerEpisode(energyPerEpisode), msPerEpisode(msPerEpisode)
     {
     }
+
+    void begin(); // Initialise objects
 
     Feedback step(int action);  // Take one timestep (1000ms)
     State resetEnv();             // Reset environement back to default
@@ -24,6 +25,7 @@ public:
 private:
 
     float conservatism = 0.0f; // How much should battery penalty be scaled in reward calculation? 0.0f = battery is not considered.
+    SensorWeights weights;
 
     int msPerEpisode = 0; // How many ms should an episode be?
     int msLeftInEpisode;  // How many ms are left in the episode?

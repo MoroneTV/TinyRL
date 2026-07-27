@@ -5,28 +5,22 @@
 
 bool SensorController::begin()
 {
+    D_println("SENSOR CONTROLLER BEGIN");
 
-    int idNo = 1;
-
-    for (Sensor *sensor : sensors)
+    for (Sensor* sensor : sensors)
     {
-        if (sensor->getWeight() > 0.0f)
+        D_println("Attempting to set up sensor: " + sensor->getName());
+
+        if (!sensor->begin())
         {
-            D_println("Attempting to set up sensor: " + sensor->getName());
-            if (!sensor->begin())
-            {
-                D_println("Sensor setup failed!: " + sensor->getName());
-                return false;
-            }
-            else
-            {
-                sensor->setId(idNo);
-                idNo++;
-            }
+            D_println("Sensor setup failed!: " + sensor->getName());
+            return false;
         }
-        else D_println("(Sensor: " + sensor->getName() + ") Weight is set to 0, not setting up");
+
+        D_println("Sensor setup complete: " + sensor->getName());
     }
 
+    D_println("ALL SENSORS COMPLETE");
     return true;
 }
 

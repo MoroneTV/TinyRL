@@ -11,8 +11,8 @@
 class SensorController
 {
 public:
-    SensorController(SensorWeights weights) : inertia(HZ_7p5, weights.getInertiaW()),
-    sensors() {}
+    SensorController(SensorWeights& weights) : inertia(HZ_7p5, weights.getInertiaW()),
+    sensors{&inertia} {}
     bool begin();
 
     // Collects 1 second's worth of information
@@ -26,8 +26,7 @@ public:
 
 private:
     InertialSensor inertia;
-
-    std::array<Sensor*, 1> sensors = {&inertia};
+    std::array<Sensor*, 1> sensors;
 };
 
 #endif

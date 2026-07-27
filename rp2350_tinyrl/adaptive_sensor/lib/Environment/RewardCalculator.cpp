@@ -1,26 +1,34 @@
 #include "RewardCalculator.h"
 #include <algorithm>
-
+#include <debug.h>
 
 float RewardCalculator::calculate(
     std::vector<SensorState> sensors,
     float conservatism,
     float batteryFrac,
-    EpisodeCompletion completionState
-)
-{  
+    EpisodeCompletion completionState)
+{
+
+    D_println("BATTERY FRAC: " + String(batteryFrac));
+    D_println("CONSERVATISM: " + String(conservatism));
+
+    float costScale = conservatism * (1 - batteryFrac);
+
+    D_println("COST SCALE: " + String(costScale));
+
     float reward = 0.0f;
 
-    for (SensorState& s : sensors) {
+    for (SensorState &s : sensors)
+    {
 
         float value = 0.0f; // Overall value the sensor has brought this timestep
         float match = 0.0f; // Match between sensor power lvl and interestingness lvl
-        
-        match = (1-abs(s.interestingness - s.scaledLvl));    // good match = 1, poor match = 0
-        value = s.weight * match;   // Value is the match scaled by the sensor's weight.
 
-        float cost = 0.0f;  // Overall cost of using the sensor at this timestep
-        float costScale = conservatism * (1-batteryFrac); // Weight of cost determined by battery level and conservatism modifier
+        match = (1 - abs(s.interestingness - s.scaledLvl)); // good match = 1, poor match = 0
+        value = s.weight * match;                           // Value is the match scaled by the sensor's weight.
+
+        float cost = 0.0f;                                  // Overall cost of using the sensor at this timestep
+        float costScale = conservatism * (1 - batteryFrac); // Weight of cost determined by battery level and conservatism modifier
 
         cost = s.flatCost * costScale;
 
@@ -37,7 +45,7 @@ float RewardCalculator::calculate(
     case FAILURE:
         reward -= 200;
         break;
-    default:    // Incomplete episode
+    default: // Incomplete episode
         break;
     }
 

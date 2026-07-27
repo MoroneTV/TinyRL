@@ -41,7 +41,11 @@ State StateCalculator::calculate(
     else
         s.epState = INCOMPLETE;
 
-    int encodedState = s.maxUnderSample * s.maxOverSample * s.currentBattery + s.drainRate;
+    s.encodedState =
+      s.maxUnderSample
+    + 10 * s.maxOverSample
+    + 10 * 10 * s.currentBattery
+    + 10 * 10 * 5 * s.drainRate;
 
     return s;
 }
@@ -94,6 +98,8 @@ std::tuple<int, float> StateCalculator::findMaxOverSample(std::vector<SensorStat
 
 int StateCalculator::getDiscreteBatteryLvl(float batteryFrac)
 {
+    batteryFrac *= 100.0f;
+
     if (batteryFrac >= 80.0f)
         return 4;
     else if (batteryFrac >= 60.0f)

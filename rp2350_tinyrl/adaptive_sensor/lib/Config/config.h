@@ -18,7 +18,6 @@ static const float OBSTACLE_WEIGHT = 0.0f;
 
 // Training hyperparameters (Env)
 static const float CONSERVATISM = 3.0f; // How much does the agent priortise saving energy? 0.0f = no consideration for energy
-static const SensorWeights SENSOR_WEIGHTS{std::array<float, 3>{INERTIA_WEIGHT, AIR_QUALITY_WEIGHT, OBSTACLE_WEIGHT}};
 
 // Training hyperparameters (Agent)
 static const float EPSILON = 0.1f;

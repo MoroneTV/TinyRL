@@ -1,18 +1,27 @@
 #ifndef INERTIALSENSOR_H
 #define INERTIALSENSOR_H
 
-#include <unordered_map>
 #include <SparkFun_LSM6DSV16X.h>
 #include "config.h"
 #include "Sensor.h"
 #include "SensorStructs.h"
 
-
-
 class InertialSensor: public Sensor {
 public:
-    InertialSensor(InertiaPowerLevel powerMode = HZ_7p5, float weight = 0.0f) 
-    : powerMode(powerMode), weight(weight) {}
+    InertialSensor(InertiaPowerLevel powerMode = HZ_7p5,
+               float weight = 0.0f)
+    : powerMode(powerMode),
+      weight(weight),
+      scaledLevel(0.0f),
+      costPerTimestep(0.0f),
+      interestingness(0.0f),
+      lastSampleTime(0),
+      sampleInterval(133)
+{
+    updateScaledLevel(powerMode);
+    updateCostPerTimestep(powerMode);
+    updateSampleInterval(powerMode);
+}
 
     bool begin();
     void update(int now); // Add reading to buffer if necessary, takes time in ms
@@ -54,39 +63,42 @@ private:
 
     // READINGS AND DATA MANAGEMENT
     InertiaReading buffer[250];         // Fastest mode is 240hz, so can contain 1 sec
-    int bPtr;                           // Biggest idx that contains meaningful information
+    int bPtr = 0;                           // Biggest idx that contains meaningful information
     int lastSampleTime;     // Time that the last sample was taken, ms
     int sampleInterval;     // How often to add samples to the buffer, in ms
 
-    // Mapping of ODR (Hz) to time between readings (ms)
-    std::unordered_map<InertiaPowerLevel,int> HzToMs = {
-        {HZ_7p5, 133},   
-        {HZ_15, 67},   
-        {HZ_60, 17},
-        {HZ_120, 8},
-        {HZ_240, 4}    
-    };
-    void updateSampleInterval(InertiaPowerLevel lvl) { sampleInterval = HzToMs[lvl]; }
+    void updateSampleInterval(InertiaPowerLevel lvl) {
+        switch (lvl) {
+            case HZ_7p5: sampleInterval = 133; break;
+            case HZ_15: sampleInterval = 67; break;
+            case HZ_60: sampleInterval = 17; break;
+            case HZ_120: sampleInterval = 8; break;
+            case HZ_240: sampleInterval = 4; break;
+            default: sampleInterval = 133; break;
+        }
+    }
 
-    // Mapping of ODR (Hz) to scaled level between 0 and 1
-    std::unordered_map<InertiaPowerLevel,float> HzToScaledLevel = {
-        {HZ_7p5, 0},   
-        {HZ_15, 0.0625},   
-        {HZ_60, 0.25},
-        {HZ_120, 0.5},
-        {HZ_240, 1}    
-    };
-    void updateScaledLevel(InertiaPowerLevel lvl) { scaledLevel = HzToScaledLevel[lvl]; }
+    void updateScaledLevel(InertiaPowerLevel lvl) {
+        switch (lvl) {
+            case HZ_7p5: scaledLevel = 0.0f; break;
+            case HZ_15: scaledLevel = 0.0625f; break;
+            case HZ_60: scaledLevel = 0.25f; break;
+            case HZ_120: scaledLevel = 0.5f; break;
+            case HZ_240: scaledLevel = 1.0f; break;
+            default: scaledLevel = 0.0f; break;
+        }
+    }
 
-    // Mapping of ODR (Hz) to cost per timestep
-    std::unordered_map<InertiaPowerLevel,float> HzToCostPerTimestep = {
-        {HZ_7p5, 1},   
-        {HZ_15, 2},   
-        {HZ_60, 8},
-        {HZ_120, 16},
-        {HZ_240, 32}    
-    };
-    void updateCostPerTimestep(InertiaPowerLevel lvl) { costPerTimestep = HzToCostPerTimestep[lvl]; }
+    void updateCostPerTimestep(InertiaPowerLevel lvl) {
+        switch (lvl) {
+            case HZ_7p5: costPerTimestep = 1.0f; break;
+            case HZ_15: costPerTimestep = 2.0f; break;
+            case HZ_60: costPerTimestep = 8.0f; break;
+            case HZ_120: costPerTimestep = 16.0f; break;
+            case HZ_240: costPerTimestep = 32.0f; break;
+            default: costPerTimestep = 1.0f; break;
+        }
+    }
 
     // OFFSETS AND CALIBRATION
     float aXoffset = 0.0f;                       

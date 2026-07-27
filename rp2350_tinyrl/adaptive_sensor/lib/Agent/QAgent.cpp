@@ -1,50 +1,77 @@
 #include "QAgent.h"
 #include <Arduino.h>
 #include <algorithm>
+#include <debug.h>
 
 int QAgent::selectAction(int state)
 {
-    // Random Chance for exploration (if lower than epsilon)
-    float r = (random(0, 100) / 100.0);
-    if (r < epsilon)
-    {
-        int randomIdx = random(actions);
-        return randomIdx;
+    if (!validState(state)) {
+        D_println("INVALID STATE: ");
+        D_println(state);
+        return 0;
     }
 
-    // If not, choose the highest rated action for that state.
+    // Exploration
+    float r = (random(0, 100) / 100.0);
+
+    if (r < epsilon)
+    {
+        return random(actions);
+    }
+
+    // Exploitation
     else
-    {   
-        // Vector for multiple idxs in case there's a tie and we need to choose randomly
-        float highestValue = qTable[state][0];
-        std::vector<int> bestIdxs = {0};
+    {
+        float highestValue = Q(state, 0);
 
-        for (int actionIdx = 0; actionIdx < qTable[state].size(); actionIdx++) {
+        // Store tied actions without allocating
+        int bestIdxs[actions];
+        int bestCount = 1;
+        bestIdxs[0] = 0;
 
-            // if new best action is found, flush vector and start again, if a tie, just add.
-            if (qTable[state][actionIdx] > highestValue) {
-                bestIdxs.clear();
-                bestIdxs.push_back(actionIdx);
-                highestValue = qTable[state][actionIdx];
+        for (int actionIdx = 1; actionIdx < actions; actionIdx++)
+        {
+            float value = Q(state, actionIdx);
+
+            if (value > highestValue)
+            {
+                highestValue = value;
+                bestCount = 1;
+                bestIdxs[0] = actionIdx;
             }
-            else if (qTable[state][actionIdx] == highestValue) {
-                bestIdxs.push_back(actionIdx);
+            else if (value == highestValue)
+            {
+                bestIdxs[bestCount] = actionIdx;
+                bestCount++;
             }
-
         }
 
-        return bestIdxs[random(bestIdxs.size())];
+        return bestIdxs[random(bestCount)];
     }
 }
 
 void QAgent::update(int state, int action, float reward, int nextState)
 {
-
-    // Find highest value next action and propogate backwards
-    float highestValueNext = qTable[nextState][0];
-    for (float value : qTable[nextState]) {
-        if (value > highestValueNext) highestValueNext = value;
+    if (!validState(state) || !validState(nextState)) {
+        D_println("INVALID STATE IN UPDATE");
+        return;
     }
 
-    qTable[state][action] += lr * (reward + gamma * highestValueNext - qTable[state][action]);
+    if (action < 0 || action >= actions) {
+        D_println("INVALID ACTION");
+        return;
+    }
+
+    float highestValueNext = Q(nextState, 0);
+
+    for (int actionIdx = 1; actionIdx < actions; actionIdx++)
+    {
+        float value = Q(nextState, actionIdx);
+
+        if (value > highestValueNext)
+            highestValueNext = value;
+    }
+
+    Q(state, action) += lr * 
+        (reward + gamma * highestValueNext - Q(state, action));
 }
