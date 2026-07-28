@@ -25,6 +25,7 @@ private:
     int getDiscreteBatteryLvl(float batteryFrac);
     int getDiscreteBatteryDrain(std::vector<SensorState>& sensors);
     int getDiscreteSampleLvl(float sample);
+    int getLeastImportantSensor(std::vector<SensorState>& sensors);
 };
 
 #endif // STATECALCULATOR_H

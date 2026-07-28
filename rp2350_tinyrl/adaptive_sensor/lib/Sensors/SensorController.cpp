@@ -5,6 +5,9 @@
 
 bool SensorController::begin()
 {
+
+    int idAssignment = 1;
+
     D_println("SENSOR CONTROLLER BEGIN");
 
     for (Sensor* sensor : sensors)
@@ -16,8 +19,9 @@ bool SensorController::begin()
             D_println("Sensor setup failed!: " + sensor->getName());
             return false;
         }
-
-        D_println("Sensor setup complete: " + sensor->getName());
+        sensor->setId(idAssignment);
+        idAssignment++;
+        D_println("Sensor setup complete: " + sensor->getName() + ", with ID: " + String(idAssignment));
     }
 
     D_println("ALL SENSORS COMPLETE");

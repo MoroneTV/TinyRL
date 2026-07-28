@@ -16,6 +16,7 @@ public:
     virtual float getInterestingness() = 0;
     virtual float getScaledLvl() = 0;
     virtual float getFlatCost() = 0;
+    virtual float getFlatMaxCost() = 0;
     virtual int getId() = 0;
     virtual String getName() = 0;
     virtual bool isEnabled() = 0;

@@ -15,7 +15,8 @@ struct State {
     int maxUnderSample = 0;   // Highest resolution as compared to interestingness (10 bins)
     int maxUnderSampleID = 0;   // Corresponding Sensor ID
 
-    int drainRate = 0;        // How many energy units are being used per timestep (5 bins)
+    int leastImportantSensorID = -1; // Sensor that should be turned down first in order to save battery
+
     int currentBattery = 5;   // Current battery level (5 x 20% bins)
 
     int timeRemaining;     // Time left in episode (MS)

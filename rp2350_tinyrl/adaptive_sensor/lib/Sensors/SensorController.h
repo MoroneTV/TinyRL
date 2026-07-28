@@ -11,8 +11,8 @@
 class SensorController
 {
 public:
-    SensorController(SensorWeights& weights) : inertia(HZ_7p5, weights.getInertiaW()),
-    sensors{&inertia} {}
+    SensorController(SensorWeights &weights) : inertia(HZ_7p5, weights.getInertiaW()),
+                                               sensors{&inertia} {}
     bool begin();
 
     // Collects 1 second's worth of information
@@ -24,9 +24,18 @@ public:
     // Adjust sensor resolution either up or down one level.
     void updateSensorSettings(int id, SensorDir dir);
 
+    Sensor *getSensorByID(int ID)
+    {   
+        Sensor* target = nullptr;
+        for (Sensor *s : sensors)
+            if (s->getId() == ID)
+                target = s;
+        return target;
+    }
+
 private:
     InertialSensor inertia;
-    std::array<Sensor*, 1> sensors;
+    std::array<Sensor *, 1> sensors;
 };
 
 #endif

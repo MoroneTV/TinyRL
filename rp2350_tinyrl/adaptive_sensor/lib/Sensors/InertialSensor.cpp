@@ -122,6 +122,9 @@ void InertialSensor::setLvl(int lvl)
 
     InertiaPowerLevel lvl_ = static_cast<InertiaPowerLevel>(lvl);
 
+    // Reset the buffer before continuing
+    clearBuffer();
+
     // Different ODR rates per level, Gyro off on the lowest mode.
     switch (lvl_)
     {
@@ -155,6 +158,8 @@ void InertialSensor::setLvl(int lvl)
     updateSampleInterval(lvl_);
     updateCostPerTimestep(lvl_);
     updateScaledLevel(lvl_);
+
+    
 
     D_println("Inertia ODR set to: " + String(powerMode));
 }

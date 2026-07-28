@@ -33,6 +33,7 @@ struct SensorState {
     float scaledLvl;
     int rawLvl;
     float flatCost;
+    float maxFlatCost;
 };
 
 struct SensorObservation {

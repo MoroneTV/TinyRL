@@ -17,13 +17,13 @@ static const float AIR_QUALITY_WEIGHT = 0.0f;
 static const float OBSTACLE_WEIGHT = 0.0f;
 
 // Training hyperparameters (Env)
-static const float CONSERVATISM = 3.0f; // How much does the agent priortise saving energy? 0.0f = no consideration for energy
+static const float CONSERVATISM = 2.0f; // How much does the agent priortise saving energy? 0.0f = no consideration for energy
 
 // Training hyperparameters (Agent)
 static const float EPSILON = 0.1f;
 static const float GAMMA = 0.99f;
 static const float LR = 0.1f;
-static const int NO_OF_ACTIONS = 3;
-static const int NO_OF_STATES = 2500;
+static const int NO_OF_ACTIONS = 4;
+static const int NO_OF_STATES = 500;
 
 #endif

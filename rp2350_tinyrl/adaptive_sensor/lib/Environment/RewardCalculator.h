@@ -13,7 +13,8 @@ public:
         std::vector<SensorState> sensors,
         float conservatism,
         float batteryFrac,
-        EpisodeCompletion successfulCompletion
+        EpisodeCompletion successfulCompletion,
+        bool invalidAction = false
     );
 
 private:

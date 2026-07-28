@@ -9,87 +9,159 @@ void Environment::begin()
 }
 Feedback Environment::step(int action)
 {
+    D_println("");
     D_println("========== ENV STEP ==========");
 
-    D_println("ACTION: " + String(action));
+    bool invalidAction = false;
+    Sensor *target = nullptr;
+    int lvl = -1;
 
     switch (action)
     {
     case 0:
+    {
+        // Turn up sensor with highest negative M value
         D_println("ACTION TYPE: INCREASE SENSOR");
         D_println("TARGET SENSOR: " + String(prevState.maxUnderSampleID));
+
+        target = sensorController->getSensorByID(prevState.maxUnderSampleID);
+
+        // No valid sensor available to increase
+        if (target == nullptr)
+        {
+            invalidAction = true;
+            D_println("INVALID ACTION: NO SENSOR TO INCREASE");
+            break;
+        }
+
+        // Store current level so we can check whether the action actually changed anything
+        lvl = target->getRawLvl();
 
         sensorController->updateSensorSettings(
             prevState.maxUnderSampleID,
             UP);
+
+        // If the level did not change, the sensor was already at maximum
+        if (target->getRawLvl() == lvl)
+        {
+            invalidAction = true;
+            D_println("INVALID ACTION: SENSOR ALREADY AT MAX LEVEL");
+        }
+
         break;
+    }
 
     case 1:
+    {
+        // Turn down sensor with highest positive M value
         D_println("ACTION TYPE: DECREASE SENSOR");
         D_println("TARGET SENSOR: " + String(prevState.maxOverSampleID));
+
+        target = sensorController->getSensorByID(prevState.maxOverSampleID);
+
+        // No valid sensor available to decrease
+        if (target == nullptr)
+        {
+            invalidAction = true;
+            D_println("INVALID ACTION: NO SENSOR TO DECREASE");
+            break;
+        }
+
+        // Store current level so we can check whether the action actually changed anything
+        lvl = target->getRawLvl();
 
         sensorController->updateSensorSettings(
             prevState.maxOverSampleID,
             DOWN);
-        break;
 
-    default:
-        D_println("ACTION TYPE: DO NOTHING");
+        // If the level did not change, the sensor was already at minimum
+        if (target->getRawLvl() == lvl)
+        {
+            invalidAction = true;
+            D_println("INVALID ACTION: SENSOR ALREADY AT MIN LEVEL");
+        }
+
         break;
     }
 
+    case 2:
+    {
+        // Turn down most costly sensor with cost adjusted by importance
+        D_println("ACTION TYPE: SAVE ENERGY");
+        D_println("TARGET SENSOR: " + String(prevState.leastImportantSensorID));
+
+        target = sensorController->getSensorByID(prevState.leastImportantSensorID);
+
+        // No valid sensor available to decrease
+        if (target == nullptr)
+        {
+            invalidAction = true;
+            D_println("INVALID ACTION: NO SENSOR AVAILABLE FOR ENERGY SAVING");
+            break;
+        }
+
+        // Store current level so we can check whether the action actually changed anything
+        lvl = target->getRawLvl();
+
+        sensorController->updateSensorSettings(
+            prevState.leastImportantSensorID,
+            DOWN);
+
+        // If the level did not change, the sensor was already at minimum
+        if (target->getRawLvl() == lvl)
+        {
+            invalidAction = true;
+            D_println("INVALID ACTION: SENSOR ALREADY AT MIN LEVEL");
+        }
+
+        break;
+    }
+
+    default:
+    {
+        // Do nothing
+        D_println("ACTION TYPE: DO NOTHING");
+        break;
+    }
+    }
+
     // ================= OBSERVATION =================
-
-    D_println("COLLECTING DATA");
-
     SensorObservation o = sensorController->collectData();
-
-    D_println("SENSOR COUNT: " + String(o.sensorStateData.size()));
-
     for (SensorState sensor : o.sensorStateData)
     {
         D_println("SENSOR ID: " + String(sensor.sensorId));
-        D_println("SENSOR NAME: " + sensor.sensorName);
-        D_println("SENSOR ENABLED: " + String(sensor.isEnabled));
         D_println("SENSOR RAW LVL: " + String(sensor.rawLvl));
         D_println("SENSOR SCALED LVL: " + String(sensor.scaledLvl));
         D_println("SENSOR INTERESTINGNESS: " + String(sensor.interestingness));
-        D_println("SENSOR WEIGHT: " + String(sensor.weight));
         D_println("SENSOR COST: " + String(sensor.flatCost));
     }
 
     // ================= STATE =================
 
-    D_println("CALCULATING STATE");
-
     State s = stateCalculator.calculate(
         o.sensorStateData,
         (energyLeftInEpisode / energyPerEpisode),
         msLeftInEpisode,
-        energyPerEpisode);
+        energyLeftInEpisode);
 
-    D_println("NEW STATE: " + String(s.encodedState));
     D_println("UNDER SAMPLE LVL: " + String(s.maxUnderSample));
     D_println("OVER SAMPLE LVL: " + String(s.maxOverSample));
     D_println("BATTERY LVL: " + String(s.currentBattery));
-    D_println("DRAIN RATE: " + String(s.drainRate));
 
     D_println("ENERGY REMAINING: " + String(s.energyRemaining));
     D_println("TIME REMAINING: " + String(s.timeRemaining));
-    D_println("EPISODE STATE: " + String(s.epState));
 
     energyLeftInEpisode = s.energyRemaining;
     msLeftInEpisode = s.timeRemaining;
 
     // ================= REWARD =================
 
-    D_println("CALCULATING REWARD");
-
     float r = rewardCalculator.calculate(
         o.sensorStateData,
         conservatism,
         (energyLeftInEpisode / energyPerEpisode),
-        s.epState);
+        s.epState,
+        invalidAction);
 
     D_println("REWARD: " + String(r));
 
@@ -101,12 +173,10 @@ Feedback Environment::step(int action)
     f.newState = s.encodedState;
     f.reward = r;
 
-    D_println("DONE: " + String(f.isDone));
-    D_println("NEXT STATE: " + String(f.newState));
-
     prevState = s;
 
     D_println("========== END ENV STEP ==========");
+    D_println("");
 
     return f;
 }

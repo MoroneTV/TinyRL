@@ -20,9 +20,10 @@ State StateCalculator::calculate(
     s.maxUnderSampleID = std::get<0>(underSample);
     s.maxUnderSample = getDiscreteSampleLvl(std::get<1>(underSample));
 
+    s.leastImportantSensorID = getLeastImportantSensor(sensors);
+
     // Sort continous battery information into discrete bins
     s.currentBattery = getDiscreteBatteryLvl(batteryFrac);
-    s.drainRate = getDiscreteBatteryDrain(sensors);
 
     // Calculate energy usage
     float energyUsed = 0.0f;
@@ -42,10 +43,7 @@ State StateCalculator::calculate(
         s.epState = INCOMPLETE;
 
     s.encodedState =
-      s.maxUnderSample
-    + 10 * s.maxOverSample
-    + 10 * 10 * s.currentBattery
-    + 10 * 10 * 5 * s.drainRate;
+        s.maxUnderSample + 10 * s.maxOverSample + 10 * 10 * s.currentBattery;
 
     return s;
 }
@@ -61,7 +59,7 @@ std::tuple<int, float> StateCalculator::findMaxUnderSample(std::vector<SensorSta
 
         // If the agent would turn anything up a level, it would be the sensor of most importance
         // That has the highest interestingness as compared to what lvl it is.
-        float weightedDiscrepancy = (sensor.interestingness - sensor.scaledLvl) * sensor.weight;
+        float weightedDiscrepancy = (sensor.interestingness - sensor.scaledLvl) * (sensor.weight / 2.0f);
 
         if (weightedDiscrepancy > max)
         {
@@ -84,7 +82,7 @@ std::tuple<int, float> StateCalculator::findMaxOverSample(std::vector<SensorStat
 
         // If the agent would turn anything down a level, it would be the sensor of least importance
         // That has the highest level as compared to how interesting the data is.
-        float weightedDiscrepancy = (sensor.interestingness - sensor.scaledLvl) * (1 - sensor.weight);
+        float weightedDiscrepancy = (sensor.interestingness - sensor.scaledLvl) * (1 - (sensor.weight / 2.0f));
 
         if (weightedDiscrepancy < min)
         {
@@ -107,25 +105,6 @@ int StateCalculator::getDiscreteBatteryLvl(float batteryFrac)
     else if (batteryFrac >= 40.0f)
         return 2;
     else if (batteryFrac >= 20.0f)
-        return 1;
-    else
-        return 0;
-}
-
-int StateCalculator::getDiscreteBatteryDrain(std::vector<SensorState> &sensors)
-{
-
-    float drain = 0.0f;
-    for (SensorState sensor : sensors)
-        drain += sensor.flatCost;
-
-    if (drain >= 60.0f)
-        return 4;
-    else if (drain >= 40.0f)
-        return 3;
-    else if (drain >= 20.0f)
-        return 2;
-    else if (drain >= 10.0f)
         return 1;
     else
         return 0;
@@ -158,4 +137,27 @@ int StateCalculator::getDiscreteSampleLvl(float sample)
         return 1;
     else
         return 0;
+}
+
+int StateCalculator::getLeastImportantSensor(std::vector<SensorState> &sensors)
+{
+
+    float mostCostly = 0.0f;
+    int ID = -1;
+
+    for (SensorState sensor : sensors)
+    {   
+
+        if (sensor.rawLvl == 0) continue;
+
+        float importanceFactor = 0.25f + 0.75f * (1.0f - sensor.weight);
+        float calibratedCost = sensor.flatCost * importanceFactor;
+
+        if (calibratedCost > mostCostly)
+        {
+            mostCostly = calibratedCost;
+            ID = sensor.sensorId;
+        }
+    }
+    return ID;
 }
