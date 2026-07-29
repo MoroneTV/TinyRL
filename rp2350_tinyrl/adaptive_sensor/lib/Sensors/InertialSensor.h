@@ -29,7 +29,13 @@ public:
     void clearBuffer() { for (int i = 0; i < 250; ++i) buffer[i] = InertiaReading(); bPtr = 0; }
 
     void setLvl(int lvl);   // 0-5 for each ODR level
-    void setId(int id) { this->id = id; }
+    
+    void setId(int id) { 
+        if (!idAssigned) {
+            this->id = id;
+            idAssigned = true;
+        }
+    }
 
     // Class-specific getters
     InertiaReading* getBuffer() { return buffer; }  // Returns buffer of readings. Max size 250.
@@ -119,6 +125,7 @@ private:
     float costPerTimestep;  // How many virtual energy points this sensor costs per timestep, based on powermode
     float weight;           // How much does the agent prioritse this sensor? should be between 0 and 1.
     float interestingness;  // How much movement is happening based on the buffer variance?
+    bool idAssigned = false;
     int id = -1;                 // Numerical ID for sensor- used for the agent to be able to index it.
     float flatMaxCost = 32;     // Maximum cost the sensor can incur during a timestep. used to normalise flatcost.
     String name = "inertia"; // Sensor name, primarily used for debugging;

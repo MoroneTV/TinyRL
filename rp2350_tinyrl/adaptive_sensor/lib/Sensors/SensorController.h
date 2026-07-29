@@ -7,12 +7,15 @@
 #include <SensorWeights.h>
 #include <array>
 #include <Sensor.h>
+#include <AirQualitySensor.h>
 
 class SensorController
 {
 public:
-    SensorController(SensorWeights &weights) : inertia(HZ_7p5, weights.getInertiaW()),
-                                               sensors{&inertia} {}
+    SensorController(SensorWeights &weights) 
+    :   inertia(HZ_7p5, weights.getInertiaW()), airQuality(SAMPLE_5s, weights.getAirQualityW()),
+        sensors{&inertia, &airQuality} {}
+        
     bool begin();
 
     // Collects 1 second's worth of information
@@ -25,8 +28,8 @@ public:
     void updateSensorSettings(int id, SensorDir dir);
 
     Sensor *getSensorByID(int ID)
-    {   
-        Sensor* target = nullptr;
+    {
+        Sensor *target = nullptr;
         for (Sensor *s : sensors)
             if (s->getId() == ID)
                 target = s;
@@ -35,7 +38,8 @@ public:
 
 private:
     InertialSensor inertia;
-    std::array<Sensor *, 1> sensors;
+    AirQualitySensor airQuality;
+    std::array<Sensor *, 2> sensors;
 };
 
 #endif

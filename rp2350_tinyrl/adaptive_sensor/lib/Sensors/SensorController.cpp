@@ -20,8 +20,8 @@ bool SensorController::begin()
             return false;
         }
         sensor->setId(idAssignment);
-        idAssignment++;
         D_println("Sensor setup complete: " + sensor->getName() + ", with ID: " + String(idAssignment));
+        idAssignment++;
     }
 
     D_println("ALL SENSORS COMPLETE");
@@ -49,6 +49,9 @@ SensorObservation SensorController::collectData()
     o.sensorStateData.push_back(inertia.getState());
     o.inertiaReadings = inertia.getBuffer();
     o.inertiaReadingPtr = inertia.getBufferPtr();
+
+    o.sensorStateData.push_back(airQuality.getState());
+    o.airQualityReading = airQuality.getMostRecentReading();
 
     // Cleanup tasks
     inertia.clearBuffer();

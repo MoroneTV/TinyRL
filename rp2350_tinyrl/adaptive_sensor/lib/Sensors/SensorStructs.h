@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include <vector>
 
-// Sensor specific structs
+// Inertia Sensor Structs
 struct InertiaReading {
     float accelX;
     float accelY;
@@ -20,6 +20,23 @@ enum InertiaPowerLevel {
     HZ_60 = 2,
     HZ_120 = 3,
     HZ_240 = 4
+};
+
+// Air Quality Sensor Structs
+struct AirQualityReading {
+    float temperature;
+    float pressure;
+    float humidity;
+    float gasResistance;
+    uint32_t timestamp;
+};
+
+enum AirQualityPowerLevel {
+    SAMPLE_30s = 0,
+    SAMPLE_15s = 1,
+    SAMPLE_10s = 2,
+    SAMPLE_5s = 3,
+    SAMPLE_1s = 4
 };
 
 // Fields that we can expect all sensors to have, making it iterable
@@ -43,6 +60,8 @@ struct SensorObservation {
     // Individual readings, goes to output sources like screen, SD, or network.
     InertiaReading* inertiaReadings;
     int inertiaReadingPtr;
+
+    AirQualityReading airQualityReading;
 };
 
 // Increase or decrease sensor lvl?

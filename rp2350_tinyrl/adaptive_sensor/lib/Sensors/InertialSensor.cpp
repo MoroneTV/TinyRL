@@ -35,6 +35,7 @@ bool InertialSensor::begin()
 
     D_println("Inertia Setup Complete!");
     setStatus(true);
+    lastSampleTime = millis();
     return true;
 }
 
