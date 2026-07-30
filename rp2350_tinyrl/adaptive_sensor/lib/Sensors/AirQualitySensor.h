@@ -58,7 +58,7 @@ public:
     SensorState getState() {
         SensorState state;
         state.sensorId = id;
-        state.sensorName = name;
+        state.name = name;
         state.isEnabled = status;
         state.weight = weight;
         state.interestingness = getInterestingness();

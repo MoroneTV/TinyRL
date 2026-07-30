@@ -8,13 +8,14 @@
 #include <array>
 #include <Sensor.h>
 #include <AirQualitySensor.h>
+#include <LightSensor.h>
 
 class SensorController
 {
 public:
     SensorController(SensorWeights &weights) 
-    :   inertia(HZ_7p5, weights.getInertiaW()), airQuality(SAMPLE_5s, weights.getAirQualityW()),
-        sensors{&inertia, &airQuality} {}
+    :   inertia(HZ_7p5, weights.getInertiaW()), airQuality(SAMPLE_5s, weights.getAirQualityW()), light(SAMPLE_5120ms, weights.getLightW()),
+        sensors{&inertia, &airQuality, &light} {}
         
     bool begin();
 
@@ -39,7 +40,8 @@ public:
 private:
     InertialSensor inertia;
     AirQualitySensor airQuality;
-    std::array<Sensor *, 2> sensors;
+    LightSensor light;
+    std::array<Sensor *, 3> sensors;
 };
 
 #endif

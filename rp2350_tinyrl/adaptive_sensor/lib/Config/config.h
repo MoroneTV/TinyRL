@@ -14,7 +14,7 @@ static const float ENERGY_PER_EP = 10000.0f;
 // Weights per sensor, affects which sensor/s the agent priortises. 0 = sensor disabled.
 static const float INERTIA_WEIGHT = 1.0f;
 static const float AIR_QUALITY_WEIGHT = 1.0f;
-static const float OBSTACLE_WEIGHT = 0.0f;
+static const float OBSTACLE_WEIGHT = 1.0f;
 
 // Training hyperparameters (Env)
 static const float CONSERVATISM = 2.0f; // How much does the agent priortise saving energy? 0.0f = no consideration for energy

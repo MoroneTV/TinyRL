@@ -53,6 +53,9 @@ SensorObservation SensorController::collectData()
     o.sensorStateData.push_back(airQuality.getState());
     o.airQualityReading = airQuality.getMostRecentReading();
 
+    o.sensorStateData.push_back(light.getState());
+    o.lightReading = light.getMostRecentReading();
+
     // Cleanup tasks
     inertia.clearBuffer();
 

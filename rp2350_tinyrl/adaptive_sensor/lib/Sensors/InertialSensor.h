@@ -55,7 +55,7 @@ public:
     SensorState getState() {
         SensorState state;
         state.sensorId = id;
-        state.sensorName = name;
+        state.name = name;
         state.isEnabled = status;
         state.weight = weight;
         state.interestingness = getInterestingness();
@@ -99,12 +99,11 @@ private:
 
     void updateCostPerTimestep(InertiaPowerLevel lvl) {
         switch (lvl) {
-            case HZ_7p5: costPerTimestep = 1.0f; break;
-            case HZ_15: costPerTimestep = 2.0f; break;
-            case HZ_60: costPerTimestep = 8.0f; break;
-            case HZ_120: costPerTimestep = 16.0f; break;
-            case HZ_240: costPerTimestep = 32.0f; break;
-            default: costPerTimestep = 1.0f; break;
+            case HZ_7p5:  costPerTimestep = 1.0f; break;
+            case HZ_15:   costPerTimestep = 1.5f; break;
+            case HZ_60:   costPerTimestep = 3.0f; break;
+            case HZ_120:  costPerTimestep = 5.0f; break;
+            case HZ_240:  costPerTimestep = 8.0f; break;
         }
     }
 

@@ -13,7 +13,7 @@ private:
     bool valid = false;
     float inertiaW;
     float airQualityW;
-    float obstacleW;
+    float lightW;
     
 public:
 
@@ -39,7 +39,7 @@ public:
 
             inertiaW    = weights[0] / sum;
             airQualityW = weights[1] / sum;
-            obstacleW   = weights[2] / sum;
+            lightW   = weights[2] / sum;
 
             valid = true;
         }
@@ -47,7 +47,7 @@ public:
 
     float getInertiaW() { return inertiaW; }
     float getAirQualityW() { return airQualityW; } 
-    float getObstacleW() { return obstacleW; } 
+    float getLightW() { return lightW; } 
     bool isValid() { return valid; } 
 };
 

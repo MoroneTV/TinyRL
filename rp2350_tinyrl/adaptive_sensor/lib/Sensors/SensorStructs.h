@@ -39,10 +39,28 @@ enum AirQualityPowerLevel {
     SAMPLE_1s = 4
 };
 
+// Light Sensor Structs
+struct LightReading {
+    int red;
+    int green;
+    int blue;
+    int clear;
+    uint32_t timestamp;
+};
+
+enum LightPowerLevel {
+    SAMPLE_5120ms = 0,
+    SAMPLE_2560ms = 1,
+    SAMPLE_1280ms = 2,
+    SAMPLE_640ms = 3,
+    SAMPLE_320ms = 4,
+    SAMPLE_160ms = 5
+};
+
 // Fields that we can expect all sensors to have, making it iterable
 struct SensorState {
     int sensorId;
-    String sensorName = "NULL";
+    String name = "NULL";
     bool isEnabled = false;
 
     float weight;
@@ -62,6 +80,8 @@ struct SensorObservation {
     int inertiaReadingPtr;
 
     AirQualityReading airQualityReading;
+
+    LightReading lightReading;
 };
 
 // Increase or decrease sensor lvl?

@@ -129,7 +129,7 @@ Feedback Environment::step(int action)
     SensorObservation o = sensorController->collectData();
     for (SensorState sensor : o.sensorStateData)
     {
-        D_println("SENSOR ID: " + String(sensor.sensorId));
+        D_println("SENSOR NAME: " + String(sensor.name));
         D_println("SENSOR RAW LVL: " + String(sensor.rawLvl));
         D_println("SENSOR SCALED LVL: " + String(sensor.scaledLvl));
         D_println("SENSOR INTERESTINGNESS: " + String(sensor.interestingness));
