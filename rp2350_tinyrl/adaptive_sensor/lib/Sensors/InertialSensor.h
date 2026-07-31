@@ -3,6 +3,7 @@
 
 #include <SparkFun_LSM6DSV16X.h>
 #include "config.h"
+#include "debug.h"
 #include "Sensor.h"
 #include "SensorStructs.h"
 

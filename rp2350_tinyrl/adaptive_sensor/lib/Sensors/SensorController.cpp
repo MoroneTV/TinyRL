@@ -46,18 +46,22 @@ SensorObservation SensorController::collectData()
     // Fill structs
     SensorObservation o;
 
+    if (inertia.isEnabled()) {
     o.sensorStateData.push_back(inertia.getState());
     o.inertiaReadings = inertia.getBuffer();
     o.inertiaReadingPtr = inertia.getBufferPtr();
+    inertia.clearBuffer();
+    }
 
+    if (airQuality.isEnabled()) {
     o.sensorStateData.push_back(airQuality.getState());
     o.airQualityReading = airQuality.getMostRecentReading();
+    }
 
+    if (light.isEnabled()) {
     o.sensorStateData.push_back(light.getState());
     o.lightReading = light.getMostRecentReading();
-
-    // Cleanup tasks
-    inertia.clearBuffer();
+    }
 
     return o;
 }

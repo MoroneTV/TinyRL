@@ -17,7 +17,7 @@ private:
     
 public:
 
-    // Weight array in order {Inertia, AirQ, Obstacle}. Weights must not be negative and at least one must be above 0.
+    // Weight array in order {Inertia, AirQ, Light}. Weights must not be negative and at least one must be above 0.
     SensorWeights(std::array<float, 3> weights = {0.0f, 0.0f, 0.0f}) {
 
         // Weights cannot be negative, default to 0

@@ -37,6 +37,16 @@ public:
         return target;
     }
 
+    // Lookup sensor by its name. Returns nullptr if not found.
+    Sensor *getSensorByName(String name)
+    {
+        Sensor *target = nullptr;
+        for (Sensor *s : sensors)
+            if (s->getName() == name)
+                target = s;
+        return target;
+    }
+
 private:
     InertialSensor inertia;
     AirQualitySensor airQuality;

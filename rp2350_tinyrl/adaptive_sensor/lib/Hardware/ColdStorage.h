@@ -1,36 +1,28 @@
-#ifndef COLD_STORAGE_H
-#define COLD_STORAGE_H
+#ifndef COLDSTORAGE_H
+#define COLDSTORAGE_H
 
+#include <cstddef>
 #include <Arduino.h>
-#include <SD.h>
 #include <vector>
-#include "config.h"
+#include <array>
+#include <SD.h>
+#include <ConfigValues.h>
+
 
 class ColdStorage {
-    public:
-        // Setup SD card and find names for the files. Optional custom names
-        // But use the sequential naming scheme if not. use format ("NAME.txt")
-        bool begin(String customQName = "", String customLogName = "");   
+public:
+    ColdStorage();
 
-        // Read most recent Q table entry in SD card (if one exists)
-        std::vector<std::vector<float>> getLatestQTable();
-        // Write a Q table to the available Q file
-        bool writeQTable(std::vector<std::vector<float>> &q);
+    bool begin();
 
-        bool getStatus()            { return status; }
-        String getLogFileName()     { return log; }
-        String getQFileName()       { return q; }
+    void setTargetRLFile(String filename) {targetRLFile = filename;}
+    String getTargetRLFile() { return targetRLFile; }
 
-    private:
-        bool status = false;
-        String log = "null";    // Log file name
-        String q = "null";      // Q table file name
+    bool writeToRLFile(ConfigValues values);
+    ConfigValues readFromRLFile();
 
-        String findFileNo(String dir);  // Find smallest sequential file name
-
-        void setStatus(bool s)              { status = s; }
-        void setLogFileName(String name)    { log = name; }
-        void setQFileName(String name)      { q = name; }
+private:
+    String targetRLFile;
 };
 
-#endif
+#endif // COLDSTORAGE_H

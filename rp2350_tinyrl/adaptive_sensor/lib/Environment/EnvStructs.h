@@ -27,11 +27,23 @@ struct State {
     int encodedState = 2500;   // Integer representing overall state
 };
 
+// Information to be printed
+struct OutputData {
+    int msRemaining;
+    int energyRemaining;
+
+    int lightLvl = -1;
+    int inertiaLvl = -1;
+    int airQLvl = -1;
+};
+
 // What is passed back to the agent?
 struct Feedback {
     int newState;
     float reward;
     bool isDone;
+
+    OutputData outputData;
 };
 
 #endif

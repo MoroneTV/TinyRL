@@ -1,151 +1,114 @@
 #include "ColdStorage.h"
 
-bool ColdStorage::begin(String customQName, String customLogName)
-{
+ColdStorage::ColdStorage() {}
 
-    // Start SD
-    if (!SD.begin(SS))
-    {
-        D_println("SD Card Failure. Check that it's connected.");
+bool ColdStorage::begin() {
+    return SD.begin(SS);
+}
+
+bool ColdStorage::writeToRLFile(ConfigValues values) {
+    if (SD.exists(getTargetRLFile())) {
+        SD.remove(getTargetRLFile());
+    }
+
+    File file = SD.open(getTargetRLFile(), FILE_WRITE);
+    if (!file) {
         return false;
     }
 
-    // Make required folders for q tables and logs
-    if (!SD.exists("/q_files"))
-        SD.mkdir("/q_files");
-        D_println("Created Directory: /q_files");
-    if (!SD.exists("/logs"))
-        SD.mkdir("/logs");
-        D_println("Created Directory: /logs");
+    // Agent params
+    file.println("CONSERVATISM: " + String(values.conservatism));
+    // Weights (array of 3)
+    file.println("WEIGHT_0: " + String(values.weights[0]));
+    file.println("WEIGHT_1: " + String(values.weights[1]));
+    file.println("WEIGHT_2: " + String(values.weights[2]));
 
-    // If custom file names have been provided, use those. If not, use sequential naming
-    if (customQName.isEmpty())
-        setQFileName(findFileNo("/q_files/q_tables"));
-    else
-        setQFileName(String("/q_files/" + customQName + ".txt"));
+    file.println("ENERGY_PER_EP: " + String(values.energyPerEp));
+    file.println("MS_PER_EP: " + String(values.msPerEp));
 
-    if (customLogName.isEmpty())
-        setLogFileName(findFileNo("/logs/log"));
-    else
-        setLogFileName(String("/logs/" + customLogName + ".txt"));
+    // Agent parameters
+    file.println("EPSILON: " + String(values.epsilon));
+    file.println("GAMMA: " + String(values.gamma));
+    file.println("LR: " + String(values.lr));
+    file.println("NO_OF_ACTIONS: " + String(values.noOfActions));
+    file.println("NO_OF_STATES: " + String(values.noOfStates));
 
-    setStatus(true);
+    // Q-table: write size then values
+    file.println("QTABLE_SIZE: " + String(values.qTable.size()));
+    for (size_t i = 0; i < values.qTable.size(); ++i) {
+        file.println("Q_" + String(i) + ": " + String(values.qTable[i]));
+    }
+
+    file.close();
     return true;
 }
 
-String ColdStorage::findFileNo(String dir)
-{
-    int num = 1;
-    String name = dir + String(num) + ".txt";
+ConfigValues ColdStorage::readFromRLFile() {
+    ConfigValues values{};
+    values.weights.fill(0.0f);
+    values.qTable.clear();
 
-    while (SD.exists(name))
-    {
-        num++;
-        name = dir + String(num) + ".txt";
+    File file = SD.open(getTargetRLFile(), FILE_READ);
+    if (!file) {
+        return values;
     }
 
-    return name;
-}
-
-bool ColdStorage::writeQTable(std::vector<std::vector<float>> &q)
-{
-
-    if (SD.exists(getQFileName()))
-        SD.remove(getQFileName());
-
-    File f = SD.open(getQFileName(), FILE_WRITE);
-    if (!f)
-    {
-        D_println("Failed to open q table file: " + getQFileName());
-        return false;
-    }
-
-    for (std::vector<float> line : q)
-    {
-        for (float weight : line)
-        {
-            f.print(weight);
-            f.print(',');
+    while (file.available()) {
+        String line = file.readStringUntil('\n');
+        line.trim();
+        if (line.length() == 0) {
+            continue;
         }
-        f.print("\n");
-    }
 
-    f.close();
-    return true;
-}
+        int separator = line.indexOf(':');
+        if (separator < 0) {
+            continue;
+        }
 
-std::vector<std::vector<float>> ColdStorage::getLatestQTable()
-{
-    std::vector<std::vector<float>> q;
+        String key = line.substring(0, separator);
+        String value = line.substring(separator + 1);
+        key.trim();
+        value.trim();
 
-    int num = 1;
-    int latest = -1;
-    String fileName = String("/q_files/q_tables") + num + ".txt";
-
-    // Find Q file with the highest iterator that has content saved to it
-    while (true)
-    {
-        fileName = String("/q_files/q_tables") + num + ".txt";
-
-        if (!SD.exists(fileName))
-            break;
-
-        File f = SD.open(fileName, FILE_READ);
-
-        if (f)
-        {
-            if (f.size() > 0)
-            {
-                latest = num;
-                f.close();
-                num++;
-                continue;
+        if (key == "CONSERVATISM") {
+            values.conservatism = value.toFloat();
+        } else if (key == "WEIGHT_0") {
+            values.weights[0] = value.toFloat();
+        } else if (key == "WEIGHT_1") {
+            values.weights[1] = value.toFloat();
+        } else if (key == "WEIGHT_2") {
+            values.weights[2] = value.toFloat();
+        } else if (key == "ENERGY_PER_EP") {
+            values.energyPerEp = value.toFloat();
+        } else if (key == "MS_PER_EP") {
+            values.msPerEp = value.toInt();
+        } else if (key == "EPSILON") {
+            values.epsilon = value.toFloat();
+        } else if (key == "GAMMA") {
+            values.gamma = value.toFloat();
+        } else if (key == "LR") {
+            values.lr = value.toFloat();
+        } else if (key == "NO_OF_ACTIONS") {
+            values.noOfActions = value.toFloat();
+        } else if (key == "NO_OF_STATES") {
+            values.noOfStates = value.toFloat();
+        } else if (key == "QTABLE_SIZE") {
+            int qTableSize = value.toInt();
+            if (qTableSize > 0) {
+                values.qTable.clear();
+                values.qTable.resize(qTableSize);
             }
-
-            f.close();
+        } else if (key.startsWith("Q_")) {
+            int index = key.substring(2).toInt();
+            if (index >= 0) {
+                if (index >= (int)values.qTable.size()) {
+                    values.qTable.resize(index + 1);
+                }
+                values.qTable[index] = value.toFloat();
+            }
         }
-
-        break;
     }
 
-    if (latest == -1)
-    {
-        // No valid Q-table found, return empty table
-        D_println("No valid Q tables found!");
-        return q;
-    }
-
-    fileName = String("/q_files/q_tables") + latest + ".txt";
-    File f = SD.open(fileName, FILE_READ);
-
-    if (!f)
-    {
-        D_println("Failed to open Q-table file");
-        return q;
-    }
-
-    D_println("Reading Q table from file: " + fileName);
-
-    while (f.available())
-    {
-        String line = f.readStringUntil('\n');
-
-        std::vector<float> row;
-
-        int start = 0;
-        int comma;
-
-        while ((comma = line.indexOf(',', start)) != -1)
-        {
-            row.push_back(line.substring(start, comma).toFloat());
-            start = comma + 1;
-        }
-
-        if (!row.empty())
-            q.push_back(row);
-    }
-
-    f.close();
-
-    return q;
+    file.close();
+    return values;
 }

@@ -42,7 +42,7 @@ public:
 
     LightReading getMostRecentReading() { return history[(head + historySize - 1) % historySize]; }
 
-    static const int historySize = 30;
+    static const int historySize = 5;
     LightReading history[historySize];
     int head = 0;
     int count = 0;
@@ -112,12 +112,12 @@ private:
 
     void updateCostPerTimestep(LightPowerLevel lvl) {
         switch (lvl) {
-            case SAMPLE_160ms: costPerTimestep = 32; break;
-            case SAMPLE_320ms: costPerTimestep = 16; break;
-            case SAMPLE_640ms: costPerTimestep = 8; break;
-            case SAMPLE_1280ms: costPerTimestep = 4; break;
-            case SAMPLE_2560ms: costPerTimestep = 2; break;
-            case SAMPLE_5120ms: costPerTimestep = 1; break;
+            case SAMPLE_160ms: costPerTimestep = 8; break;
+            case SAMPLE_320ms: costPerTimestep = 5; break;
+            case SAMPLE_640ms: costPerTimestep = 3; break;
+            case SAMPLE_1280ms: costPerTimestep = 2; break;
+            case SAMPLE_2560ms: costPerTimestep = 1.2; break;
+            case SAMPLE_5120ms: costPerTimestep = 0.6; break;
         }
     }
 };

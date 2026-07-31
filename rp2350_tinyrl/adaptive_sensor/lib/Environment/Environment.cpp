@@ -127,6 +127,8 @@ Feedback Environment::step(int action)
 
     // ================= OBSERVATION =================
     SensorObservation o = sensorController->collectData();
+
+    /*
     for (SensorState sensor : o.sensorStateData)
     {
         D_println("SENSOR NAME: " + String(sensor.name));
@@ -135,6 +137,7 @@ Feedback Environment::step(int action)
         D_println("SENSOR INTERESTINGNESS: " + String(sensor.interestingness));
         D_println("SENSOR COST: " + String(sensor.flatCost));
     }
+    */
 
     // ================= STATE =================
 
@@ -143,13 +146,15 @@ Feedback Environment::step(int action)
         (energyLeftInEpisode / energyPerEpisode),
         msLeftInEpisode,
         energyLeftInEpisode);
-
+    
+    /*
     D_println("UNDER SAMPLE LVL: " + String(s.maxUnderSample));
     D_println("OVER SAMPLE LVL: " + String(s.maxOverSample));
     D_println("BATTERY LVL: " + String(s.currentBattery));
 
     D_println("ENERGY REMAINING: " + String(s.energyRemaining));
     D_println("TIME REMAINING: " + String(s.timeRemaining));
+    */
 
     energyLeftInEpisode = s.energyRemaining;
     msLeftInEpisode = s.timeRemaining;
@@ -164,6 +169,18 @@ Feedback Environment::step(int action)
         invalidAction);
 
     D_println("REWARD: " + String(r));
+    
+    // ================= OUTPUT =================
+    OutputData op;
+
+    op.energyRemaining = energyLeftInEpisode;
+    op.msRemaining = msLeftInEpisode;
+
+    for (SensorState sensor : o.sensorStateData) {
+        if ((sensor.name).equals("inertia")) op.inertiaLvl = sensor.rawLvl;
+        if ((sensor.name).equals("airQuality")) op.airQLvl = sensor.rawLvl;
+        if ((sensor.name).equals("light")) op.lightLvl = sensor.rawLvl;
+    }
 
     // ================= FEEDBACK =================
 
@@ -172,6 +189,8 @@ Feedback Environment::step(int action)
     f.isDone = (s.epState != INCOMPLETE);
     f.newState = s.encodedState;
     f.reward = r;
+
+    f.outputData = op;
 
     prevState = s;
 

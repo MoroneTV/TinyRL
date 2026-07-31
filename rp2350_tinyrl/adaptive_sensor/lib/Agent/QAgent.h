@@ -49,6 +49,8 @@ public:
     {
         return qTable;
     }
+
+    void setQTable(std::vector<float> qTable) { this->qTable = qTable; }
 };
 
 #endif
