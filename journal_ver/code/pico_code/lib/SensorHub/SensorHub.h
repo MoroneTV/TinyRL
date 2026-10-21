@@ -1,8 +1,8 @@
 #ifndef SENSORHUB_H
 #define SENSORHUB_H
 
-#include "Controller/ControllerDatatypes.h"
-#include "Environment/EnvironmentDatatypes.h"
+#include "ControllerDatatypes.h"
+#include "EnvironmentDatatypes.h"
 
 class SensorHub {
 

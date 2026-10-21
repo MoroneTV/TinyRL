@@ -2,7 +2,7 @@
 #define CONTROLLER_H
 
 #include "ControllerDatatypes.h"
-#include "Environment/EnvironmentDatatypes.h"
+#include "EnvironmentDatatypes.h"
 
 // Virtual class for controller objects, like RL, manual, algorithmic, etc.
 class Controller {

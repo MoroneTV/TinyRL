@@ -2,9 +2,9 @@
 #define ADAPTIVESYSTEM_H
 
 #include "AdaptiveSystemDatatypes.h"
-#include "Environment/Environment.h"
-#include "Controller/Controller.h"
-#include "Sensor/SensorHub.h"
+#include "Environment.h"
+#include "Controller.h"
+#include "SensorHub.h"
 
 class AdaptiveSystem {
 

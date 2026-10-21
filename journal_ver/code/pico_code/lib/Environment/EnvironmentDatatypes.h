@@ -1,13 +1,9 @@
-#ifndef ENVIRONTMENTDATATYPES_H
-#define ENVIRONTMENTDATATYPES_H
+#ifndef ENVIRONMENTDATATYPES_H
+#define ENVIRONMENTDATATYPES_H
 
-struct SensorReadings {};   // Actual sensor readings, like temperature or light
-struct SensorMetadata {};   // Information about sensors- power level, interestingness values, etc.
+#include <Arduino.h>
 
-struct SensorData {
-    SensorReadings sensorReadings;
-    SensorMetadata sensorMetadata;
-};
+
 
 struct EnvironmentVars {};  // Battery state, energy usage
 
