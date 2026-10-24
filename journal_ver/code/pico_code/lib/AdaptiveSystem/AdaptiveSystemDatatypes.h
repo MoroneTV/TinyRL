@@ -2,6 +2,7 @@
 #define ADAPTIVESYSTEMDATATYPES_H
 
 #include "EnvironmentDatatypes.h"
+#include "ControllerDatatypes.h"
 
 /*
 Contains all information about sensors, metadata, controller, environment

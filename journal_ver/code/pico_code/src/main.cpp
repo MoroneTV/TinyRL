@@ -4,6 +4,8 @@
 #include <Wire.h>
 #include <SD.h>
 
+#include "AdaptiveSystem.h"
+
 #define READ_INTERVAL_MS 1000
 
 Display display;
