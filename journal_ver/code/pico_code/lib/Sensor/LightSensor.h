@@ -41,8 +41,10 @@ public:
         return md;
     }
 
+    virtual int getID() {return std::get<1>(id);}
+
     // Gets all readings from buffer that are from after the provided timestamp.
-    std::vector<LightSensorReadings> getNewReadings(unsigned long timestamp)
+    SensorReadings getNewReadings(unsigned long timestamp, SensorReadings& r)
     {
         std::vector<LightSensorReadings> readings;
         int lastIdx = readingBuffer.getReadingCount() - 1;
@@ -54,7 +56,14 @@ public:
             }
         }
 
-        return readings;
+        if(readings.empty())
+        {
+            return r;
+        }
+        
+        r.newLightReadings = true;
+        r.lightReadings = readings;
+        return r;
     }
 
 private:

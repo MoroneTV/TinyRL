@@ -1,125 +1,102 @@
-#ifndef AIRQUALITYSENSOR_H
-#define AIRQUALITYSENSOR_H
+#ifndef CLIMATESENSOR_H
+#define CLIMATESENSOR_H
 
 #include "Sensor.h"
-#include "SensorStructs.h"
 #include "bme68xLibrary.h"
-#include "debug.h"
+#include <tuple>
+#include "SensorReadingBuffer.h"
 
-
-class AirQualitySensor: public Sensor {
+class ClimateSensor : public Sensor
+{
 public:
-    AirQualitySensor(int powerLevel = 0,
-                    float weight = 0.0f)
-    : powerMode(powerLevel),
-      weight(weight),
-      scaledLevel(0.0f),
-      costPerTimestep(0.0f),
-      interestingness(0.0f),
-      status(false),
-      idAssigned(false),
-      id(-1),
-      flatMaxCost(16.0f),
-      name("airQuality")
+    ClimateSensor(
+        int idNo,
+        float weight = 0.0f,
+        int readingBufferLen = 10,
+        float upperTempBound = 30,
+        float lowerTempBound = 5
+        ) : readingBuffer(readingBufferLen), sensorWeight(weight),
+        upperBound(upperTempBound), lowerBound(lowerTempBound)
     {
-        updateScaledLevel(static_cast<AirQualityPowerLevel>(powerMode));
-        updateCostPerTimestep(static_cast<AirQualityPowerLevel>(powerMode));
-        updateSampleInterval(static_cast<AirQualityPowerLevel>(powerMode));
+        id = std::make_tuple("climate", idNo);
     }
 
-    bool begin();
-    void update(int now);
-    void setLvl(int lvl);
+    virtual bool initialise();
+    virtual void update(unsigned long now);
 
-    void setId(int id) {
-        if (!idAssigned) {
-            this->id = id;
-            idAssigned = true;
+    virtual int getID() {return std::get<1>(id);}
+
+    virtual bool updateSettings(ControllerInstruction instructions); // Update sensor Lvl
+    virtual SensorMetadata getMetadata()
+    {
+        SensorMetadata md;
+
+        md.sensorName = std::get<0>(id);
+        md.sensorID = std::get<1>(id);
+
+        md.isEnabled = isEnabled;
+        md.sensorWeight = sensorWeight;
+
+        md.sensorMaxLvl = std::get<0>(powerSettings);
+        md.SensorCurrentLvl = std::get<1>(powerSettings);
+        md.sensorScaledLvl = std::get<2>(powerSettings);
+
+        md.interestingness = calculateInterestingness();
+
+        return md;
+    }
+
+    // Gets all readings from buffer that are from after the provided timestamp.
+    SensorReadings getNewReadings(unsigned long timestamp, SensorReadings& r)
+    {
+        std::vector<ClimateSensorReadings> readings;
+        int lastIdx = readingBuffer.getReadingCount() - 1;
+
+        for (int i = 0; i < lastIdx; i++) {
+            ClimateSensorReadings reading;
+            if (readingBuffer.getReading(i, reading) && reading.timestamp > timestamp) {
+                readings.push_back(reading);
+            }
         }
+
+        if(readings.empty())
+        {
+            return r;
+        }
+        
+        r.newClimateReadings = true;
+        r.climateReadings = readings;
+        return r;
     }
 
-    AirQualityReading getMostRecentReading() { return history[(head + historySize - 1) % historySize]; }
-
-    static const int historySize = 30;
-    AirQualityReading history[historySize];
-    int head = 0;
-    int count = 0;
-
-    bool isEnabled()  { return status; }
-    int getRawLvl()   { return powerMode; }
-    float getWeight() { return weight; }
-    float getInterestingness();
-    float getScaledLvl() { return scaledLevel; }
-    float getFlatCost() { return costPerTimestep; }
-    float getFlatMaxCost() { return flatMaxCost; }
-    int getId()       { return id; }
-    String getName()  { return name; }
-
-    SensorState getState() {
-        SensorState state;
-        state.sensorId = id;
-        state.name = name;
-        state.isEnabled = status;
-        state.weight = weight;
-        state.interestingness = getInterestingness();
-        state.scaledLvl = scaledLevel;
-        state.rawLvl = powerMode;
-        state.flatCost = costPerTimestep;
-        state.maxFlatCost = flatMaxCost;
-        return state;
-    }
 
 private:
-
     Bme68x bme;
 
-    int powerMode;
-    float scaledLevel;
-    float weight;
-    float interestingness;
-    bool status;
-    bool idAssigned;
-    int id;
-    float flatMaxCost;
-    String name;
+    // Name | Id number
+    std::tuple<String, int> id;
 
-    void setStatus(bool s) { status = s; }
+    // Max Lvl | Current Lvl | Scaled Lvl [0,1] | Sample Interval in MS
+    std::tuple<int, int, float, int> powerSettings;
 
-    void updateSampleInterval(AirQualityPowerLevel lvl) {
-        switch (lvl) {
-            case SAMPLE_30s: sampleInterval = 30000; break;
-            case SAMPLE_15s: sampleInterval = 15000; break;
-            case SAMPLE_10s: sampleInterval = 10000; break;
-            case SAMPLE_5s: sampleInterval = 5000; break;
-            case SAMPLE_1s: sampleInterval = 1000; break;
-            default: sampleInterval = 30000; break;
-        }
-    }
-    int sampleInterval;
-    int lastSampleTime;     // Time that the last sample was taken, ms
+    // If weight = 0, Sensor will not be enabled.
+    bool isEnabled = false;
+    float sensorWeight;
 
-    void updateScaledLevel(AirQualityPowerLevel lvl) {
-        switch (lvl) {
-            case SAMPLE_30s: scaledLevel = 0.0f; break;
-            case SAMPLE_15s: scaledLevel = 0.075; break;
-            case SAMPLE_10s: scaledLevel = 0.1; break;
-            case SAMPLE_5s: scaledLevel = 0.2; break;
-            case SAMPLE_1s: scaledLevel = 1.0f; break;
-            default: scaledLevel = 0.0f; break;
-        }
-    }
+    // Readings & Interestingness
+    SensorReadingBuffer<ClimateSensorReadings> readingBuffer;
+    int lastSampleTime;
+    float calculateInterestingness();
 
-    void updateCostPerTimestep(AirQualityPowerLevel lvl) {
-        switch (lvl) {
-            case SAMPLE_30s: costPerTimestep = 1; break;
-            case SAMPLE_15s: costPerTimestep = 2; break;
-            case SAMPLE_10s: costPerTimestep = 3; break;
-            case SAMPLE_5s: costPerTimestep = 6; break;
-            case SAMPLE_1s: costPerTimestep = 30; break;
-            default: costPerTimestep = 1.0f; break;
-        }
-    }
-    float costPerTimestep;
+    // Helper methods for updating sensor.
+    void updatePowerSettings(ClimatePowerMode lvl);
+    bool relativeUpdate(Direction dir);
+    bool absoluteUpdate(int value);
+
+    // Min and max temperature bounds where interestingness reaches max.
+    float lowerBound;
+    float upperBound;
+
 };
 
 #endif // AIRQUALITYSENSOR_H

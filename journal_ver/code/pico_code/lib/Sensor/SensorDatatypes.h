@@ -2,6 +2,7 @@
 #define SENSORDATATYPES_H
 
 #include <Arduino.h>
+#include <vector>
 
 struct LightSensorReadings
 {
@@ -38,6 +39,7 @@ struct ClimateSensorReadings
     float temperature;
     float humidity;
     float pressure;
+    float gas_resistance;
 
     unsigned long timestamp;
 };
@@ -53,19 +55,14 @@ struct PowerSensorReadings
 
 struct SensorReadings
 {
-    // Array of readings, with pointer to where they stop.
-    LightSensorReadings *lightReadings = nullptr;
-    int lightSensorPtr = 0;
+    bool newLightReadings = false;
+    std::vector<LightSensorReadings> lightReadings;
 
-    InertiaSensorReadings *inertiaReadings = nullptr;
-    int inertiaSensorPtr = 0;
+    bool newInertiaReadings = false;
+    std::vector<InertiaSensorReadings> inertiaReadings;
 
-    ClimateSensorReadings *climateReadings = nullptr;
-    int climateSensorPtr = 0;
-
-    // Power sensor is always on and cannot be configured, unlike above three
-    PowerSensorReadings *powerReadings = nullptr;
-    int powerSensorPtr = 0;
+    bool newClimateReadings = false;
+    std::vector<ClimateSensorReadings> climateReadings;
 };
 
 // Information about sensors- power level, interestingness values, etc.
@@ -89,7 +86,7 @@ struct SensorMetadata
 struct SensorData
 {
     SensorReadings sensorReadings;
-    SensorMetadata sensorMetadata;
+    std::vector<SensorMetadata> sensorMetadata;
 };
 
 enum LightPowerMode {
@@ -106,6 +103,14 @@ enum InertiaPowerMode {
     HZ_60 = 2,
     HZ_120 = 3,
     HZ_240 = 4
+};
+
+enum ClimatePowerMode {
+    SAMPLE_30s = 0,
+    SAMPLE_15s = 1,
+    SAMPLE_10s = 2,
+    SAMPLE_5s = 3,
+    SAMPLE_1s = 4
 };
 
 #endif

@@ -6,8 +6,9 @@
 // Battery state, energy usage
 struct EnvironmentVars {
 
-    float currentBaseline;  // AVG current of system at rest
-    float currentActual;    // Current current (haha)
+    float powerAtStart; // Power lvl at beginning of timestep  
+    float powerAtEnd;   // Power lvl at end of timestep
+    float powerDelta;   // Power loss over timestep
 
     float batteryLvl;       // [0,1] Range
 };  

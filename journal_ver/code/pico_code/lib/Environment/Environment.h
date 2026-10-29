@@ -6,8 +6,8 @@
 class Environment {
 
     public:
-        Environment();
-        ~Environment();
+        Environment() {};
+        ~Environment() {};
 
         EnvironmentData step(SensorData sensorData);  // Takes in sensor data, updates environment state, and returns new environment data
 

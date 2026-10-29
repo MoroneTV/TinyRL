@@ -5,27 +5,45 @@
 #include "Environment.h"
 #include "Controller.h"
 #include "SensorHub.h"
+#include "ConstStructs.h"
 
-class AdaptiveSystem {
+#include "RlController.h"
+#include "ManualController.h"
+#include "AlgorithmicController.h"
 
-    public:
-        AdaptiveSystem(
-            Controller& controller,
-            Environment& environment,
-            SensorHub& sensorHub
-        )
-        : controller(controller), environment(environment), sensorHub(sensorHub) {};
-        ~AdaptiveSystem();
+class AdaptiveSystem
+{
 
-        void initialize();
-        StepOverview step();      // Complete one complete control/sensor/processing cycle
+public:
+    AdaptiveSystem(SystemConfig config)
+        : environment(), sensorHub(config.sensorConfig)
+    {
+        switch (config.controllerType)
+        {
+        case RL:
+            controller = new RlController();
+            break;
+        case MANUAL:
+            controller = new ManualController();
+            break;
+        case ALGORITHMIC:
+            controller = new AlgorithmicController();
+            break;
+        }
+    };
 
-    private:
-        Controller& controller;
-        Environment& environment;
-        SensorHub& sensorHub;
 
-        StepOverview prevStepOverview;  // Previous step's overview,
+    ~AdaptiveSystem();
+
+    void initialize();
+    StepOverview step(); // Complete one complete control/sensor/processing cycle
+
+private:
+    Controller *controller = nullptr;
+    Environment environment;
+    SensorHub sensorHub;
+
+    StepOverview prevStepOverview; // Previous step's overview,
 };
 
 #endif // ADAPTIVESYSTEM_H

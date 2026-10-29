@@ -21,6 +21,8 @@ public:
     virtual bool initialise();
     virtual void update(unsigned long now);
 
+    virtual int getID() {return std::get<1>(id);}
+
     virtual bool updateSettings(ControllerInstruction instructions); // Update sensor Lvl
     virtual SensorMetadata getMetadata()
     {
@@ -42,7 +44,7 @@ public:
     }
 
     // Gets all readings from buffer that are from after the provided timestamp.
-    std::vector<InertiaSensorReadings> getNewReadings(unsigned long timestamp)
+    SensorReadings getNewReadings(unsigned long timestamp, SensorReadings& r)
     {
         std::vector<InertiaSensorReadings> readings;
         int lastIdx = readingBuffer.getReadingCount() - 1;
@@ -54,7 +56,14 @@ public:
             }
         }
 
-        return readings;
+        if(readings.empty())
+        {
+            return r;
+        }
+        
+        r.newInertiaReadings = true;
+        r.inertiaReadings = readings;
+        return r;
     }
 
 

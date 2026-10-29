@@ -1,7 +1,7 @@
-#include "AirQualitySensor.h"
+#include "ClimateSensor.h"
 #include <stdlib.h>
 
-bool AirQualitySensor::begin()
+bool ClimateSensor::initialise()
 {
 
     bme.begin(0x76, Wire);
@@ -11,14 +11,20 @@ bool AirQualitySensor::begin()
     {
         if (bme.checkStatus() == BME68X_ERROR)
         {
-            D_println("Sensor error:" + bme.statusString());
+            Serial.println("Sensor error:" + bme.statusString());
             return false;
         }
         else if (bme.checkStatus() == BME68X_WARNING)
         {
-            D_println("Sensor Warning:" + bme.statusString());
+            Serial.println("Sensor Warning:" + bme.statusString());
             return false;
         }
+    }
+
+    if (sensorWeight == 0)
+    {
+        Serial.println("Climate sensor weight is 0, will not activate");
+        return false;
     }
 
     // Start in forced mode
@@ -30,21 +36,17 @@ bool AirQualitySensor::begin()
     /* Set the heater configuration to 300 deg C for 100ms for Forced mode */
     bme.setHeaterProf(300, 100);
 
-    /* Clear buffer timestamps from junk data */
-    for (int i = 0; i < historySize; i++)
-    {
-        history[i] = {};
-    }
-    head = 0;
-    count = 0;
+    // Set initial level to 5s.
+    absoluteUpdate(SAMPLE_5s);
 
-    setStatus(true);
+    isEnabled = true;
     lastSampleTime = millis();
     return true;
 }
 
-void AirQualitySensor::update(int now)
-{
+void ClimateSensor::update(unsigned long now)
+{  
+    int sampleInterval = std::get<3>(powerSettings);
 
     // Add a reading to the buffer if enough time has elapsed
     if (now - lastSampleTime > sampleInterval)
@@ -58,73 +60,98 @@ void AirQualitySensor::update(int now)
             bme.getData(data);
         }
 
-        AirQualityReading r = {
+        ClimateSensorReadings r = {
             data.temperature,
             data.pressure,
             data.humidity,
             data.gas_resistance,
-            now};
+            now
+        };
 
-        history[head] = r;
-        head = (head + 1) % historySize;
-
-        if (count < historySize)
-            count++;
-
+        readingBuffer.addReading(r);
         lastSampleTime = now;
 
     }
 }
 
-void AirQualitySensor::setLvl(int lvl)
+bool ClimateSensor::updateSettings(ControllerInstruction instructions)
 {
+    if (instructions.type == RELATIVE)
+    {
+        return relativeUpdate(instructions.direction);
+    }
 
-    // Keep lvl in bounds
-    if (lvl < 0)
-        lvl = 0;
-    if (lvl > 4)
-        lvl = 4;
-
-    AirQualityPowerLevel lvl_ = static_cast<AirQualityPowerLevel>(lvl);
-
-    powerMode = lvl;
-    updateCostPerTimestep(lvl_);
-    updateSampleInterval(lvl_);
-    updateScaledLevel(lvl_);
+    else /* if instruction is absolule */
+    {
+        return absoluteUpdate(instructions.value);
+    }
 }
 
-float AirQualitySensor::getInterestingness()
+bool ClimateSensor::relativeUpdate(Direction dir)
+{
+    // Increment or decrement current lvl by one
+    int lvl = std::get<1>(powerSettings);
+    if (dir == DOWN)
+        lvl--;
+    else if (dir == UP)
+        lvl++;
+
+    // update to new lvl.
+    return absoluteUpdate(lvl);
+}
+
+bool ClimateSensor::absoluteUpdate(int val)
+{
+    int maxLvl = std::get<0>(powerSettings);
+    if (val < 0 || val > maxLvl) // Out of bounds level
+        return false;
+
+    updatePowerSettings(static_cast<ClimatePowerMode>(val));
+    return true;
+}
+
+void ClimateSensor::updatePowerSettings(ClimatePowerMode lvl)
+{
+    switch (lvl)
+    { // Max, Current, Scaled, Sampletime
+    case SAMPLE_30s:
+        powerSettings = std::make_tuple(4, 0, 0.0f, 30000);
+        break;
+    case SAMPLE_15s:
+        powerSettings = std::make_tuple(4, 1, 0.075f, 15000);
+        break;
+    case SAMPLE_10s:
+        powerSettings = std::make_tuple(4, 2, 0.1f, 10000);
+        break;
+    case SAMPLE_5s:
+        powerSettings = std::make_tuple(4, 3, 0.2f, 5000);
+        break;
+    case SAMPLE_1s:
+        powerSettings = std::make_tuple(4, 4, 1.0f, 1000);
+        break;
+    }
+}
+
+
+float ClimateSensor::calculateInterestingness()
 {
 
-    if (count < 2)
-        return 0.0f; // 0 interestingness if no readings yet.
+    // Get most recent reading.
+    ClimateSensorReadings r;
+    readingBuffer.getReading(readingBuffer.getReadingCount()-1, r);
+    float temperature = r.temperature;
 
-    AirQualityReading current = getMostRecentReading();
-    AirQualityReading *old = nullptr;
+    // Find how close it is to the upper and lower bound in terms of temperature
+    float midpoint = (lowerBound + upperBound) / 2.0;
+    float half_range = (upperBound - lowerBound) / 2.0;
 
-    int now = millis();
-    uint32_t best30sError = UINT32_MAX;
+    if (half_range <= 0.0)
+        return 1.0;
 
-    // Find the reading closest to 30s ago and the most recent one
-    for (int i = 0; i < count; i++)
-    {
-        int error30s = abs((int)((history[i].timestamp + 30000UL) - now));
-        if (error30s < best30sError)
-        {
-            best30sError = error30s;
-            old = &history[i];
-        }
-    }
-    // Calculate the normalised euclidian distances of readings
-    float tempChange = abs(current.temperature - old->temperature) / 2.0f;                          // 2C change in 30s
-    float humChange = abs(current.humidity - old->humidity) / 10.0f;                                // 10% humidity change in 30s
-    float gasChange = abs(current.gasResistance - old->gasResistance) / old->gasResistance / 0.25f; // 25% gas change in 30s
+    return constrain(
+        std::abs(temperature - midpoint) / half_range,
+        0.0,
+        1.0
+    );
 
-    float distance = sqrt(
-        tempChange * tempChange +
-        humChange * humChange +
-        gasChange * gasChange);
-
-
-    return constrain(distance / sqrt(3.0f), 0.0f, 1.0f);
 }
